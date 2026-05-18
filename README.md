@@ -1,5 +1,7 @@
 # KairaBoard
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/informgowtham/kaira)
+
 KairaBoard is a premium collaborative celebration platform where creators build digital group cards, collect messages/media from contributors, and deliver an emotional, cinematic reveal to recipients.
 
 ## Product Vision
@@ -45,6 +47,16 @@ Local demo accounts are seeded when the backend starts:
 - General user: `user@kairaboard.dev` / `User@12345`
 
 Google Sign-In requires a Google OAuth Web Client ID. Add the same value to `GOOGLE_CLIENT_ID` for the API verifier and `VITE_GOOGLE_CLIENT_ID` for the browser button.
+
+## Production Deployment
+
+When deploying KairaBoard to a production environment (e.g., VPS) and linking a custom domain (e.g., from Hostinger):
+
+1. **Build the Frontend**: Run `pnpm run build` to generate production-ready static assets in the `dist` directory.
+2. **Environment Variables**: Configure your production `.env` with live values for `DATABASE_URL`, `AUTH_SECRET`, and ensure the frontend knows the backend URL (if they aren't served from the same origin).
+3. **Run the Backend**: Start the Node.js API server using a process manager like PM2: `pm2 start server/index.ts --interpreter=tsx --name kairaboard-api`.
+4. **Serve Static Files**: Serve the frontend `dist` directory using a web server like Nginx or Apache, configured to proxy API requests to the backend port.
+5. **Domain & SSL**: Point your Hostinger DNS records (A or CNAME) to your server's IP address and install an SSL certificate (e.g., using Let's Encrypt / Certbot).
 
 ## Features
 
