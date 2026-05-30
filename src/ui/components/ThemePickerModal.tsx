@@ -26,6 +26,7 @@ export function ThemePickerModal(props: {
   const { open, occasion, selectedThemeId, onClose, onSelect } = props
   const [q, setQ] = useState('')
   const [mood, setMood] = useState<ThemeMood | 'all'>('all')
+  const [showMore, setShowMore] = useState(false)
 
   const themes = useMemo(() => {
     const base = THEMES.filter((t) => t.category === occasion)
@@ -39,6 +40,52 @@ export function ThemePickerModal(props: {
     })
     return filtered
   }, [occasion, mood, q])
+  const prioritizedThemes = useMemo(() => {
+    const rank = (animatedBackground?: string) => {
+      if (animatedBackground === 'petal-drift') return 0
+      if (animatedBackground === 'bloom-shimmer') return 1
+      return 2
+    }
+    return [...themes].sort((a, b) => rank(a.animatedBackground) - rank(b.animatedBackground))
+  }, [themes])
+  const queryActive = q.trim().length > 0 || mood !== 'all'
+  const topThemes = useMemo(() => prioritizedThemes.slice(0, 4), [prioritizedThemes])
+  const moreThemes = useMemo(() => prioritizedThemes.slice(4), [prioritizedThemes])
+
+  const visibleThemes = queryActive
+    ? prioritizedThemes
+    : showMore
+      ? [...topThemes, ...moreThemes]
+      : topThemes
+
+  function ThemeCard(props: { theme: BoardTheme; idx: number }) {
+    const { theme, idx } = props
+    const selected = theme.id === selectedThemeId
+    return (
+      <motion.div
+        key={theme.id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: idx * 0.03 }}
+        className={`rounded-2xl border p-2 kb-shadow transition cursor-pointer ${
+          selected ? 'border-white/30 bg-white/10' : 'border-white/10 kb-glass hover:bg-white/8'
+        }`}
+        onClick={() => {
+          onSelect(theme)
+          onClose()
+        }}
+      >
+        <ThemeBackground theme={theme} className="h-36 w-full rounded-xl" />
+        <div className="mt-3 px-2 pb-2">
+          <div className="text-sm font-semibold text-white">{theme.name}</div>
+          <div className="mt-1 text-xs text-white/60 leading-relaxed">{theme.description}</div>
+          <Button className="mt-3 w-full" variant={selected ? 'primary' : 'secondary'}>
+            {selected ? 'Selected' : 'Use this theme'}
+          </Button>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <Modal open={open} title="Choose a theme" onClose={onClose}>
@@ -77,37 +124,36 @@ export function ThemePickerModal(props: {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {themes.map((theme, idx) => {
-            const selected = theme.id === selectedThemeId
-            return (
-              <motion.div
-                key={theme.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.03 }}
-                className={`rounded-2xl border p-2 kb-shadow transition cursor-pointer ${
-                  selected ? 'border-white/30 bg-white/10' : 'border-white/10 kb-glass hover:bg-white/8'
-                }`}
-                onClick={() => {
-                  onSelect(theme)
-                  onClose()
-                }}
-              >
-                <ThemeBackground theme={theme} className="h-36 w-full rounded-xl" />
-                <div className="mt-3 px-2 pb-2">
-                  <div className="text-sm font-semibold text-white">{theme.name}</div>
-                  <div className="mt-1 text-xs text-white/60 leading-relaxed">{theme.description}</div>
-                  <Button className="mt-3 w-full" variant={selected ? 'primary' : 'secondary'}>
-                    {selected ? 'Selected' : 'Use this theme'}
-                  </Button>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
+        {!queryActive ? (
+          <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Top themes</div>
+        ) : (
+          <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Filtered results</div>
+        )}
+
+        {visibleThemes.length === 0 ? (
+          <div className="kb-glass rounded-xl border border-white/10 p-4 text-sm text-white/70">
+            No themes match this filter.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {visibleThemes.map((theme, idx) => (
+              <ThemeCard key={theme.id} theme={theme} idx={idx} />
+            ))}
+          </div>
+        )}
+
+        {!queryActive && moreThemes.length > 0 ? (
+          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+            <div className="text-xs text-white/65">{moreThemes.length} more styles available</div>
+            <Button
+              variant="secondary"
+              onClick={() => setShowMore((v) => !v)}
+            >
+              {showMore ? 'Show top only' : 'More styles'}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Modal>
   )
 }
-

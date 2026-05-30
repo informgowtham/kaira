@@ -4,6 +4,8 @@ import { AnimatedConfetti } from './AnimatedConfetti'
 import { AnimatedStars } from './AnimatedStars'
 import { AnimatedShapes } from './AnimatedShapes'
 import { AnimatedGalaxy } from './AnimatedGalaxy'
+import { AnimatedPetalDrift } from './AnimatedPetalDrift'
+import { AnimatedBloomShimmer } from './AnimatedBloomShimmer'
 
 /**
  * Renders the theme gradient background plus the matching animated layer.
@@ -29,6 +31,10 @@ export function ThemeBackground(props: {
         return AnimatedShapes
       case 'galaxy':
         return AnimatedGalaxy
+      case 'petal-drift':
+        return AnimatedPetalDrift
+      case 'bloom-shimmer':
+        return AnimatedBloomShimmer
       default:
         return null
     }

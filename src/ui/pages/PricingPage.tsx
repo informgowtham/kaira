@@ -45,7 +45,7 @@ export function PricingPage() {
             <div className="mt-2 text-4xl font-semibold text-white">$0</div>
             <div className="mt-1 text-sm text-white/60">For simple celebration boards</div>
             <div className="mt-5 grid gap-3 text-sm text-white/75">
-              {['5 boards per year', '20 messages per board', 'Watermark', 'No scheduled delivery', 'No memory download', 'Standard reveal'].map((item) => (
+              {['5 boards per year', '20 messages per board', 'Watermark', 'Scheduled delivery', 'Download as memory', 'Cinematic reveal'].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <Check size={16} className="text-white/75" />
                   <span>{item}</span>

@@ -6,9 +6,11 @@ export function getThemeById(themeId: string | undefined) {
 }
 
 export function messagesForBoard(messages: Message[], boardId: string) {
-  return messages.filter((m) => m.boardId === boardId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  const list = Array.isArray(messages) ? messages : []
+  return list.filter((m) => m?.boardId === boardId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
 }
 
 export function boardsForOwner(boards: Board[], ownerId: string) {
-  return boards.filter((b) => b.ownerId === ownerId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  const list = Array.isArray(boards) ? boards : []
+  return list.filter((b) => b?.ownerId === ownerId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
 }

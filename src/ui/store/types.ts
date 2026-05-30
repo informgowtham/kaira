@@ -22,7 +22,14 @@ export type BoardTheme = {
   previewGradient: string
   cardStyle: 'glass' | 'paper' | 'neon'
   proOnly?: boolean
-  animatedBackground?: 'balloons' | 'confetti' | 'stars' | 'floating-shapes' | 'galaxy'
+  animatedBackground?:
+    | 'balloons'
+    | 'confetti'
+    | 'stars'
+    | 'floating-shapes'
+    | 'galaxy'
+    | 'petal-drift'
+    | 'bloom-shimmer'
 }
 
 export type Board = {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { 
-  CalendarClock, Crown, Link2, PartyPopper, Play, Trash2, Users, Palette,
+  CalendarClock, Link2, PartyPopper, Play, Trash2, Users, Palette,
   ExternalLink, Timer, Mail
 } from 'lucide-react'
 import { TopBar } from '../components/TopBar'
@@ -36,7 +36,6 @@ export function BoardPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [showDeliver, setShowDeliver] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const [showTheme, setShowTheme] = useState(false)
   const [scheduledAt, setScheduledAt] = useState('')
   const [destinationType, setDestinationType] = useState<'recipient' | 'creator'>('recipient')
@@ -211,19 +210,6 @@ export function BoardPage() {
 
       <Modal open={showDeliver} title="Schedule delivery" onClose={() => setShowDeliver(false)}>
         <div className="grid gap-3">
-          {plan === 'free' ? (
-            <div className="kb-glass rounded-xl border border-white/10 p-4">
-              <div className="text-sm font-semibold text-white flex items-center gap-2">
-                <Crown size={16} className="text-amber-200" />
-                Scheduled delivery is a Pro feature
-              </div>
-              <div className="mt-1 text-sm text-white/70">Preview the UI and switch plans (UI-only billing).</div>
-              <Button className="mt-3" variant="primary" onClick={() => setShowUpgrade(true)}>
-                Unlock Pro in UI
-              </Button>
-            </div>
-          ) : null}
-
           <div>
             <div className="text-xs text-white/60">Delivery date & time</div>
             <input
@@ -278,7 +264,7 @@ export function BoardPage() {
             </Button>
             <Button
               variant="primary"
-              disabled={plan === 'free' || !scheduledAt}
+              disabled={!scheduledAt}
               onClick={async () => {
                 await updateBoard(board.id, {
                   scheduledAt: new Date(scheduledAt).toISOString(),
@@ -293,22 +279,6 @@ export function BoardPage() {
             </Button>
           </div>
         </div>
-      </Modal>
-
-      <Modal open={showUpgrade} title="Upgrade to Pro" onClose={() => setShowUpgrade(false)}>
-        <div className="text-sm text-white/75">
-          The application uses UI-only monetization gates. Switching to Pro unlocks premium themes, scheduled delivery, downloads, and the premium reveal preview.
-        </div>
-        <Button
-          className="mt-4"
-          variant="primary"
-          onClick={() => {
-            useAppStore.getState().setPlan('pro')
-            setShowUpgrade(false)
-          }}
-        >
-          Switch to Pro
-        </Button>
       </Modal>
 
       <ThemePickerModal

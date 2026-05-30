@@ -250,7 +250,15 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'kairaboard.phase2',
-      version: 2,
+      version: 3,
+      migrate: (persistedState: any) => {
+        const state = persistedState && typeof persistedState === 'object' ? persistedState : {}
+        const user = state.user && typeof state.user === 'object' ? state.user : null
+        const plan = state.plan === 'pro' ? 'pro' : 'free'
+        const boards = Array.isArray(state.boards) ? state.boards : []
+        const messages = Array.isArray(state.messages) ? state.messages : []
+        return { ...state, user, plan, boards, messages }
+      },
       partialize: (state) => ({
         user: state.user,
         plan: state.plan,

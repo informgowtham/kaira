@@ -12,12 +12,10 @@ import type { Group } from 'three'
 import { TopBar } from '../components/TopBar'
 import { Surface } from '../components/Surface'
 import { Button } from '../components/Button'
-import { Modal } from '../components/Modal'
 import { Masonry } from '../components/Masonry'
 import { MessageCard } from '../components/MessageCard'
 import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
 
-import { useAppStore } from '../store/useAppStore'
 import { getReveal } from '../store/api'
 import { getThemeById } from '../store/selectors'
 import { useSEO } from '../utils/seo'
@@ -29,10 +27,8 @@ export function RevealPage() {
   const [revealMessages, setRevealMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const plan = useAppStore((s) => s.plan)
   const [stage, setStage] = useState<'anticipation' | 'opening' | 'messages' | 'ending'>('anticipation')
   const [opened, setOpened] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
 
   const theme = getThemeById(board?.themeId)
 
@@ -228,7 +224,7 @@ export function RevealPage() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                   <div>
                     <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 18} people</div>
-                    <div className="mt-1 text-sm text-white/70">Premium reveal is {plan === 'pro' ? 'unlocked' : 'previewed in UI-only mode'}.</div>
+                    <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <div className="relative group">
@@ -239,8 +235,7 @@ export function RevealPage() {
                         <button 
                           className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition"
                           onClick={() => {
-                            if (plan === 'free') setShowUpgrade(true)
-                            else handleDownloadMemory('html')
+                            handleDownloadMemory('html')
                           }}
                         >
                           <FileText size={16} className="text-blue-400" />
@@ -249,8 +244,7 @@ export function RevealPage() {
                         <button 
                           className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 border-t border-white/5 transition"
                           onClick={() => {
-                            if (plan === 'free') setShowUpgrade(true)
-                            else handleDownloadMemory('pdf')
+                            handleDownloadMemory('pdf')
                           }}
                         >
                           <FileDown size={16} className="text-red-400" />
@@ -269,22 +263,6 @@ export function RevealPage() {
           ) : null}
         </AnimatePresence>
       </div>
-
-      <Modal open={showUpgrade} title="Upgrade to Pro" onClose={() => setShowUpgrade(false)}>
-        <div className="text-sm text-white/75">
-          The application uses UI-only monetization gates. Switching to Pro unlocks premium themes, scheduled delivery, downloads, and the premium reveal preview.
-        </div>
-        <Button
-          className="mt-4"
-          variant="primary"
-          onClick={() => {
-            useAppStore.getState().setPlan('pro')
-            setShowUpgrade(false)
-          }}
-        >
-          Switch to Pro
-        </Button>
-      </Modal>
     </div>
     </ThemeBackground>
   )

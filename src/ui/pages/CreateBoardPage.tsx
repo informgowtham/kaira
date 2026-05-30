@@ -73,7 +73,16 @@ export function CreateBoardPage() {
 
   const selectedTheme = useMemo(() => THEMES.find((t) => t.id === themeId) ?? THEMES[0], [themeId])
   const occasionThemes = useMemo(() => THEMES.filter((t) => t.category === occasion), [occasion])
-  const topThemes = occasionThemes.slice(0, 3)
+  const topThemes = useMemo(() => {
+    const rank = (animatedBackground?: string) => {
+      if (animatedBackground === 'petal-drift') return 0
+      if (animatedBackground === 'bloom-shimmer') return 1
+      return 2
+    }
+    return [...occasionThemes]
+      .sort((a, b) => rank(a.animatedBackground) - rank(b.animatedBackground))
+      .slice(0, 3)
+  }, [occasionThemes])
   const emailOk = isValidEmail(recipientEmail)
   const deliveryOk = deliveryAt ? deliveryAt.getTime() > Date.now() : false
   const canCreate = Boolean(recipientName.trim()) && emailOk && deliveryOk && !loading
