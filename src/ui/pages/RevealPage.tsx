@@ -126,36 +126,44 @@ export function RevealPage() {
   }
 
   const signatureTemplate = getSignatureTemplate(board.themeId)
-  if (signatureTemplate && (stage === 'messages' || stage === 'ending')) {
+  if (signatureTemplate) {
     const displayMessages = revealMessages.length ? revealMessages : fallbackMessages()
     return (
-      <SignatureTemplateRenderer
-        templateId={signatureTemplate.id}
-        mode="reveal"
-        topBar={<TopBar compact />}
-        title={board.title}
-        recipientName={board.recipientName}
-        messages={displayMessages}
-        footerSlot={
-          stage === 'ending' ? (
-            <div className="mx-auto flex max-w-6xl flex-col gap-3 rounded-2xl border border-white/10 bg-black/25 p-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
-                <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
+      <div className="relative min-h-screen overflow-hidden bg-black">
+        <SignatureTemplateRenderer
+          templateId={signatureTemplate.id}
+          mode="reveal"
+          topBar={<TopBar compact />}
+          title={board.title}
+          recipientName={board.recipientName}
+          messages={displayMessages}
+          isRevealing={stage === 'anticipation' || stage === 'opening'}
+          onRevealComplete={() => {
+            setOpened(true)
+            setStage('messages')
+            confetti({ particleCount: 120, spread: 84, origin: { y: 0.6 } })
+          }}
+          footerSlot={
+            stage === 'ending' ? (
+              <div className="mx-auto flex max-w-6xl flex-col gap-3 rounded-2xl border border-white/10 bg-black/25 p-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between relative z-50">
+                <div>
+                  <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
+                  <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" left={<Download size={16} />} onClick={() => handleDownloadMemory('html')}>
+                    Download Memory
+                  </Button>
+                  <Button variant="secondary" onClick={() => { setOpened(false); setStage('anticipation') }}>
+                    Replay Celebration
+                  </Button>
+                  <Button variant="ghost" left={<Play size={16} />}>Share Reaction</Button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" left={<Download size={16} />} onClick={() => handleDownloadMemory('html')}>
-                  Download Memory
-                </Button>
-                <Button variant="secondary" onClick={() => { setOpened(false); setStage('anticipation') }}>
-                  Replay Celebration
-                </Button>
-                <Button variant="ghost" left={<Play size={16} />}>Share Reaction</Button>
-              </div>
-            </div>
-          ) : null
-        }
-      />
+            ) : null
+          }
+        />
+      </div>
     )
   }
 

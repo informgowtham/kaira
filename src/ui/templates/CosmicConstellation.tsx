@@ -15,8 +15,8 @@
  * - Batched cluster navigation for >30 messages
  */
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
 const COSMIC_CSS = `
@@ -65,7 +65,13 @@ function generateCoordinates(count: number): { cx: number; cy: number }[] {
 
 const BATCH_SIZE = 24
 
-export function CosmicConstellation(props: SignatureTemplateProps) {
+export function CosmicConstellation(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [showOverlay, setShowOverlay] = useState(props.isRevealing)
+
+  useEffect(() => {
+    if (props.isRevealing) setShowOverlay(true)
+  }, [props.isRevealing])
+
   const { messages, recipientName } = props
   const title = props.title || (recipientName ? `Celebrating ${recipientName} 🌌` : 'Star Map Memory 🌌')
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
@@ -83,7 +89,55 @@ export function CosmicConstellation(props: SignatureTemplateProps) {
   }))
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#03010c] text-white font-sans">
+    <>
+      <AnimatePresence onExitComplete={() => { if (!showOverlay) props.onRevealComplete?.() }}>
+        {showOverlay && (
+          <motion.div 
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-black"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 1.5, delay: 1.5 } }}
+          >
+            {/* The single star that goes supernova */}
+            <motion.div
+              className="absolute bg-white rounded-full"
+              initial={{ width: 10, height: 10, boxShadow: '0 0 20px 5px rgba(255,255,255,0.8)' }}
+              exit={{ 
+                scale: 300, 
+                opacity: 0, 
+                boxShadow: '0 0 100px 50px rgba(255,255,255,1)',
+                transition: { duration: 2, ease: "easeIn" } 
+              }}
+            />
+
+            {/* Cosmic dust blowing outward */}
+            {Array.from({ length: 60 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 rounded-full"
+                style={{ backgroundColor: ['#a855f7', '#3b82f6', '#ec4899', '#ffffff'][i % 4] }}
+                exit={{ 
+                  x: (Math.random() - 0.5) * 3000, 
+                  y: (Math.random() - 0.5) * 3000,
+                  scale: 0,
+                  opacity: 0,
+                  transition: { duration: 1.5 + Math.random(), ease: "easeOut" }
+                }}
+              />
+            ))}
+
+            <motion.button
+              className="relative z-10 px-8 py-3 text-sm font-bold tracking-[0.3em] text-white bg-transparent border border-white/30 rounded-full hover:bg-white/10 transition-colors"
+              onClick={() => setShowOverlay(false)}
+              exit={{ scale: 0, opacity: 0, transition: { duration: 0.3 } }}
+              whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(255,255,255,0.5)' }}
+              whileTap={{ scale: 0.95 }}
+            >
+              IGNITE
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="relative min-h-screen w-full overflow-hidden bg-[#03010c] text-white font-sans">
       {props.topBar}
       <style dangerouslySetInnerHTML={{ __html: COSMIC_CSS }} />
 
@@ -386,5 +440,6 @@ export function CosmicConstellation(props: SignatureTemplateProps) {
         </footer>
       </div>
     </div>
+    </>
   )
 }

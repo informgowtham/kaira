@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
 const PETALS = Array.from({ length: 18 }, (_, idx) => ({
@@ -7,12 +8,76 @@ const PETALS = Array.from({ length: 18 }, (_, idx) => ({
   size: 12 + (idx % 4) * 5,
 }))
 
-export function FloralLetterpress(props: SignatureTemplateProps) {
+export function FloralLetterpress(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [showOverlay, setShowOverlay] = useState(props.isRevealing)
+
+  useEffect(() => {
+    if (props.isRevealing) setShowOverlay(true)
+  }, [props.isRevealing])
+
   const title = props.title || (props.recipientName ? `For ${props.recipientName}` : 'A Floral Celebration')
   const messages = props.messages
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#fff8ef] text-[#3d2430]">
+    <>
+      <AnimatePresence onExitComplete={() => { if (!showOverlay) props.onRevealComplete?.() }}>
+        {showOverlay && (
+          <motion.div 
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[#1a3a29]"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 1.5, delay: 1.5 } }}
+          >
+            <motion.div 
+              className="absolute inset-0 pointer-events-none flex justify-between"
+              exit={{ opacity: 0, transition: { delay: 1.5 } }}
+            >
+               {/* Left Vine Canopy */}
+               <motion.div 
+                 className="w-1/2 h-full bg-[#112a1d] origin-left"
+                 style={{ borderRight: '8px solid #2d5a3f', borderRadius: '0 40% 40% 0' }}
+                 exit={{ scaleX: 0, transition: { duration: 2, ease: "easeInOut" } }}
+               />
+               {/* Right Vine Canopy */}
+               <motion.div 
+                 className="w-1/2 h-full bg-[#112a1d] origin-right"
+                 style={{ borderLeft: '8px solid #2d5a3f', borderRadius: '40% 0 0 40%' }}
+                 exit={{ scaleX: 0, transition: { duration: 2, ease: "easeInOut" } }}
+               />
+               {/* Petals blowing */}
+               {Array.from({ length: 40 }).map((_, i) => (
+                 <motion.div
+                   key={i}
+                   className="absolute w-6 h-6 bg-rose-400/80 rounded-[70%_30%_70%_30%]"
+                   style={{ 
+                     left: `${Math.random() * 100}%`, 
+                     top: `${Math.random() * 100}%`,
+                     rotate: `${Math.random() * 360}deg` 
+                   }}
+                   exit={{ 
+                     x: (Math.random() - 0.5) * 2000, 
+                     y: (Math.random() - 0.5) * 2000,
+                     rotate: Math.random() * 720,
+                     opacity: 0,
+                     scale: 0,
+                     transition: { duration: 2.5 + Math.random(), ease: "easeOut" }
+                   }}
+                 />
+               ))}
+            </motion.div>
+            
+            <motion.button
+              className="relative z-10 px-10 py-5 font-serif text-3xl text-rose-50 bg-[#2d4a36] border border-rose-300/50 rounded-full shadow-[0_0_40px_rgba(244,114,182,0.3)] hover:bg-[#3d5a46] transition-all tracking-widest"
+              onClick={() => setShowOverlay(false)}
+              exit={{ scale: 0, opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8, ease: "backIn" } }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              UNVEIL
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="relative min-h-screen overflow-hidden bg-[#fff8ef] text-[#3d2430]">
       {props.topBar}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(244,114,182,.22),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(251,191,36,.18),transparent_28%),linear-gradient(120deg,rgba(255,255,255,.5),transparent)]" />
       <div className="pointer-events-none absolute inset-6 rounded-[2rem] border border-rose-200/80 shadow-[inset_0_0_0_8px_rgba(255,255,255,.42)]" />
@@ -64,5 +129,6 @@ export function FloralLetterpress(props: SignatureTemplateProps) {
         {props.footerSlot ? <div className="mt-8">{props.footerSlot}</div> : null}
       </div>
     </div>
+    </>
   )
 }

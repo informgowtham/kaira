@@ -16,6 +16,7 @@
  *   <BirthdayWallArt messages={messages} recipientName="Alex" />
  */
 
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 import type { SignatureTemplateProps } from './signatureTypes'
@@ -173,14 +174,59 @@ const CONFETTI_PIECES = [
 ]
 
 /* ─── Main Component ─────────────────────────────────────────────── */
-export function BirthdayWallArt(props: SignatureTemplateProps) {
+export function BirthdayWallArt(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [showOverlay, setShowOverlay] = useState(props.isRevealing)
+
+  useEffect(() => {
+    if (props.isRevealing) setShowOverlay(true)
+  }, [props.isRevealing])
+
   const { messages, recipientName } = props
   const title = props.title || `Happy Birthday${recipientName ? `, ${recipientName}` : ''}! 🎉`
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden font-sans"
-      style={{ background: 'linear-gradient(160deg, #1a0a2e 0%, #2d0e35 35%, #1a1230 65%, #0d1a2e 100%)' }}
-    >
+    <>
+      <AnimatePresence onExitComplete={() => { if (!showOverlay) props.onRevealComplete?.() }}>
+        {showOverlay && (
+          <motion.div 
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-black"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 1, delay: 1.5 } }}
+          >
+            {/* Left Curtain */}
+            <motion.div 
+              className="absolute left-0 top-0 bottom-0 w-1/2 bg-[#5c0a1a] border-r-8 border-[#3a040f]"
+              style={{ boxShadow: 'inset -20px 0 50px rgba(0,0,0,0.5)' }}
+              exit={{ x: '-100%', transition: { duration: 2, ease: [0.4, 0, 0.2, 1] } }}
+            >
+              {/* Curtain Folds */}
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.4)_0%,transparent_20%,transparent_80%,rgba(0,0,0,0.4)_100%)] bg-[length:100px_100%]" />
+            </motion.div>
+            
+            {/* Right Curtain */}
+            <motion.div 
+              className="absolute right-0 top-0 bottom-0 w-1/2 bg-[#5c0a1a] border-l-8 border-[#3a040f]"
+              style={{ boxShadow: 'inset 20px 0 50px rgba(0,0,0,0.5)' }}
+              exit={{ x: '100%', transition: { duration: 2, ease: [0.4, 0, 0.2, 1] } }}
+            >
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.4)_0%,transparent_20%,transparent_80%,rgba(0,0,0,0.4)_100%)] bg-[length:100px_100%]" />
+            </motion.div>
+
+            <motion.button
+              className="relative z-10 px-10 py-4 font-serif text-2xl text-[#fde68a] bg-[#881327] border-2 border-[#fde68a]/50 rounded shadow-[0_0_30px_rgba(0,0,0,0.8)] hover:bg-[#a0162e] transition-colors"
+              onClick={() => setShowOverlay(false)}
+              exit={{ scale: 0, opacity: 0, transition: { duration: 0.5 } }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Open Curtains
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div
+        className="relative min-h-screen w-full overflow-hidden font-sans"
+        style={{ background: 'linear-gradient(160deg, #1a0a2e 0%, #2d0e35 35%, #1a1230 65%, #0d1a2e 100%)' }}
+      >
       {props.topBar}
       <style dangerouslySetInnerHTML={{ __html: WALL_ART_CSS }} />
 
@@ -400,5 +446,6 @@ export function BirthdayWallArt(props: SignatureTemplateProps) {
         </footer>
       </div>
     </div>
+    </>
   )
 }

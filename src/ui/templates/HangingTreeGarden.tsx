@@ -207,7 +207,8 @@ function TreeScene({ rustle = false }: { rustle?: boolean }) {
   )
 }
 
-export function HangingTreeGarden(props: SignatureTemplateProps) {
+export function HangingTreeGarden(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [isUnveiling, setIsUnveiling] = useState(false)
   const { messages, recipientName } = props
   const title = props.title || (recipientName ? `For ${recipientName} 🌿` : 'Your Celebration Tree 🌿')
 
@@ -263,6 +264,49 @@ export function HangingTreeGarden(props: SignatureTemplateProps) {
 
   return (
     <div className="relative w-full overflow-hidden font-sans bg-[#030a1a]" style={{ minHeight: '100vh' }}>
+      <AnimatePresence onExitComplete={() => { if (isUnveiling && props.onRevealComplete) props.onRevealComplete(); }}>
+        {props.isRevealing && !isUnveiling && (
+          <motion.div
+            className="fixed inset-0 z-[999999] flex items-center justify-center overflow-hidden bg-slate-900"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: 'blur(20px)', transition: { duration: 2.5, ease: "easeInOut" } }}
+          >
+            {/* Dense morning fog layers */}
+            <motion.div 
+              className="absolute inset-0 bg-slate-200 opacity-20 blur-[100px]"
+              exit={{ x: "-50%", opacity: 0, transition: { duration: 2.5 } }}
+            />
+            <motion.div 
+              className="absolute inset-0 bg-slate-400/30 blur-[120px]"
+              exit={{ x: "50%", opacity: 0, transition: { duration: 2.5 } }}
+            />
+            <motion.div 
+              className="absolute w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-100/10 via-transparent to-transparent"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+              exit={{ scale: 1.5, opacity: 0, transition: { duration: 2.5 } }}
+            />
+
+            {/* Sun ray */}
+            <motion.div 
+              className="absolute top-[-20%] left-[-20%] w-[140%] h-[40%] bg-gradient-to-r from-transparent via-amber-100/30 to-transparent rotate-45 blur-3xl pointer-events-none"
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              exit={{ scale: 3, opacity: 0, transition: { duration: 2 } }}
+            />
+
+            <motion.button 
+              onClick={() => setIsUnveiling(true)}
+              className="relative z-10 px-10 py-5 text-xl font-serif text-slate-800 bg-white/80 backdrop-blur-md rounded-full shadow-[0_0_50px_rgba(255,255,255,0.4)] border border-white/50 hover:bg-white transition-colors cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.8 } }}
+            >
+              Unveil Garden
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {props.topBar}
       <style dangerouslySetInnerHTML={{ __html: TREE_CSS }} />
 

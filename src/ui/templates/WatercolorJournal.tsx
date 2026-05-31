@@ -11,7 +11,8 @@
  * gently in a summer breeze.
  */
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
 const PAPER_CSS = `
@@ -48,12 +49,47 @@ const PIN_COLORS = [
 
 const POSTCARD_ROTATIONS = ['-rotate-1', 'rotate-2', '-rotate-2', 'rotate-1', '-rotate-3', 'rotate-3']
 
-export function WatercolorJournal(props: SignatureTemplateProps) {
+export function WatercolorJournal(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [isUnveiling, setIsUnveiling] = useState(false)
   const { messages, recipientName } = props
   const title = props.title || (recipientName ? `A Journal for ${recipientName} 🎨` : 'Wishes & Watercolors 🎨')
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden text-rose-950 font-sans paper-canvas">
+      <AnimatePresence onExitComplete={() => { if (isUnveiling && props.onRevealComplete) props.onRevealComplete(); }}>
+        {props.isRevealing && !isUnveiling && (
+          <motion.div
+            className="fixed inset-0 z-[999999] flex items-center justify-center bg-[#faf7f2] overflow-hidden"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 2, delay: 0.8 } }}
+          >
+            {/* Canvas Texture */}
+            <div className="absolute inset-0 opacity-40 mix-blend-multiply bg-[radial-gradient(rgba(145,110,80,0.1)_1px,transparent_0)] bg-[length:24px_24px]" />
+            
+            {/* Ink drop that explodes */}
+            <motion.div
+              className="absolute w-20 h-20 rounded-full pointer-events-none mix-blend-multiply"
+              initial={{ scale: 0, opacity: 0 }}
+              exit={{ 
+                scale: 150,
+                opacity: [0, 0.8, 0.8, 0],
+                backgroundColor: ["#f43f5e", "#8b5cf6", "#14b8a6", "#f43f5e"],
+                transition: { duration: 2.5, times: [0, 0.2, 0.8, 1], ease: "easeInOut" }
+              }}
+            />
+
+            <motion.button
+              onClick={() => setIsUnveiling(true)}
+              className="relative z-10 px-10 py-5 text-xl font-serif text-rose-950 bg-white/50 backdrop-blur-sm border border-rose-900/20 rounded-full hover:bg-rose-50 transition-colors shadow-lg cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.5 } }}
+            >
+              Splash Canvas
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {props.topBar}
       <style dangerouslySetInnerHTML={{ __html: PAPER_CSS }} />
 

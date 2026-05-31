@@ -1,11 +1,49 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
-export function MemoryLanePaper(props: SignatureTemplateProps) {
+export function MemoryLanePaper(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [isUnveiling, setIsUnveiling] = useState(false)
   const title = props.title || (props.recipientName ? `Memory Lane for ${props.recipientName}` : 'Memory Lane')
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#f8efe1] text-[#3b2614]">
+      <AnimatePresence onExitComplete={() => { if (isUnveiling && props.onRevealComplete) props.onRevealComplete(); }}>
+        {props.isRevealing && !isUnveiling && (
+          <motion.div
+            className="fixed inset-0 z-[999999] flex items-center justify-center bg-zinc-950"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 2, delay: 1 } }}
+          >
+            <motion.div 
+              className="relative w-[300px] h-[360px] bg-white p-4 pb-16 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col cursor-pointer"
+              initial={{ y: "100vh", rotate: -5 }}
+              animate={{ y: 0, rotate: 2, transition: { type: "spring", damping: 15, delay: 0.3 } }}
+              exit={{ scale: 15, opacity: 0, transition: { duration: 2.5, ease: "easeInOut" } }}
+              onClick={() => setIsUnveiling(true)}
+              whileHover={{ scale: 1.03, rotate: 0 }}
+            >
+              <motion.div 
+                className="flex-1 bg-zinc-800 overflow-hidden relative border border-zinc-200/10 shadow-inner"
+                exit={{ backgroundColor: "rgba(255,255,255,0)", transition: { duration: 1.5 } }}
+              >
+                {/* Developing image effect inside polaroid */}
+                <motion.div
+                  className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-200/80 to-amber-900/90 mix-blend-overlay"
+                  initial={{ opacity: 0 }}
+                  exit={{ opacity: 1, scale: 1.5, transition: { duration: 1.5, ease: "easeOut" } }}
+                />
+              </motion.div>
+              <motion.div 
+                className="absolute bottom-5 left-0 w-full text-center text-zinc-400 font-serif italic text-sm"
+                exit={{ opacity: 0 }}
+              >
+                Tap to Develop
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {props.topBar}
       <div className="pointer-events-none absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(120,80,40,.12)_1px,transparent_1px)] [background-size:100%_28px]" />
       <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1200 900" preserveAspectRatio="none" aria-hidden="true">

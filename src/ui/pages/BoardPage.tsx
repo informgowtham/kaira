@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { clsx } from 'clsx'
 import { 
   CalendarClock, Link2, PartyPopper, Play, Trash2, Users, Palette,
   ExternalLink, Timer, Mail
@@ -74,38 +75,39 @@ export function BoardPage() {
   const waText = `Hey! We’re creating a surprise card for ${board.recipientName} 🎉 Add your message here: ${contributorLink}`
   const isFreeLimitReached = plan === 'free' && messages.length >= 20
   const signatureTemplate = getSignatureTemplate(board.themeId)
+  const signatureTone = signatureTemplate?.previewTone || 'dark'
   const boardActions = (
     <>
-      <Button variant="secondary" left={<PartyPopper size={16} />} onClick={() => setShowAdd(true)} disabled={loading}>
+      <Button variant="secondary" left={<PartyPopper size={16} />} onClick={() => setShowAdd(true)} disabled={loading} tone={signatureTone}>
         Add Message
       </Button>
-      <Button variant="secondary" left={<Link2 size={16} />} onClick={() => setShowInvite(true)}>
+      <Button variant="secondary" left={<Link2 size={16} />} onClick={() => setShowInvite(true)} tone={signatureTone}>
         Invite
       </Button>
-      <Button variant="secondary" left={<CalendarClock size={16} />} onClick={() => setShowDeliver(true)}>
+      <Button variant="secondary" left={<CalendarClock size={16} />} onClick={() => setShowDeliver(true)} tone={signatureTone}>
         Deliver
       </Button>
-      <Button variant="secondary" left={<Palette size={16} />} onClick={() => setShowTheme(true)}>
+      <Button variant="secondary" left={<Palette size={16} />} onClick={() => setShowTheme(true)} tone={signatureTone}>
         Theme
       </Button>
-      <Button variant="ghost" left={<Play size={16} />} onClick={() => navigate(`/r/${board.id}/${board.revealToken}`)}>
+      <Button variant="ghost" left={<Play size={16} />} onClick={() => navigate(`/r/${board.id}/${board.revealToken}`)} tone={signatureTone}>
         Preview Reveal
       </Button>
     </>
   )
   const signatureEmptyState = (
-    <Surface className="p-6 text-center">
-      <div className="text-white text-lg font-semibold">Your card is ready</div>
-      <div className="mt-1 text-sm text-white/70">Start by adding your message or invite others.</div>
+    <div className={clsx("p-6 text-center rounded-2xl border backdrop-blur-md", signatureTone === 'dark' ? "bg-black/20 border-white/10" : "bg-white/40 border-black/10 shadow-sm")}>
+      <div className={clsx("text-lg font-semibold", signatureTone === 'dark' ? "text-white" : "text-black/90")}>Your card is ready</div>
+      <div className={clsx("mt-1 text-sm", signatureTone === 'dark' ? "text-white/70" : "text-black/60")}>Start by adding your message or invite others.</div>
       <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
-        <Button variant="primary" onClick={() => setShowAdd(true)}>
+        <Button variant="primary" onClick={() => setShowAdd(true)} tone={signatureTone}>
           Add First Message
         </Button>
-        <Button variant="secondary" onClick={() => setShowInvite(true)}>
+        <Button variant="secondary" onClick={() => setShowInvite(true)} tone={signatureTone}>
           Copy Invite Link
         </Button>
       </div>
-    </Surface>
+    </div>
   )
 
   if (signatureTemplate) {
@@ -114,7 +116,7 @@ export function BoardPage() {
         <SignatureTemplateRenderer
           templateId={signatureTemplate.id}
           mode="owner"
-          topBar={<TopBar />}
+          topBar={<TopBar tone={signatureTone} />}
           title={board.title}
           recipientName={board.recipientName}
           messages={messages}

@@ -32,4 +32,7 @@ export type SignatureTemplateProps = {
   actionSlot?: ReactNode
   emptyState?: ReactNode
   footerSlot?: ReactNode
+  isRevealing?: boolean
+  onRevealComplete?: () => void
+  previewTone?: 'light' | 'dark' | 'paper'
 }

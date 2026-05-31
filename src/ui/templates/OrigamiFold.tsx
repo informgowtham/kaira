@@ -1,11 +1,42 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
-export function OrigamiFold(props: SignatureTemplateProps) {
+export function OrigamiFold(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [isUnveiling, setIsUnveiling] = useState(false)
   const title = props.title || (props.recipientName ? `For ${props.recipientName}` : 'Folded With Care')
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f8fbff,#eef2ff_52%,#ffffff)] text-slate-950">
+      <AnimatePresence onExitComplete={() => { if (isUnveiling && props.onRevealComplete) props.onRevealComplete(); }}>
+        {props.isRevealing && !isUnveiling && (
+          <motion.div
+            className="fixed inset-0 z-[999999] flex items-center justify-center bg-indigo-600 origin-center overflow-hidden"
+            initial={{ opacity: 1 }}
+            exit={{ 
+              scaleX: [1, 0.5, 0.5, 0], 
+              scaleY: [1, 1, 0.5, 0],
+              rotateZ: [0, 90, 180, 270],
+              opacity: [1, 1, 1, 0],
+              transition: { duration: 2.5, ease: "easeInOut" } 
+            }}
+          >
+            {/* Some fold lines for texture */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none bg-[linear-gradient(45deg,transparent_49%,white_49%,white_51%,transparent_51%)] bg-[length:100px_100px]" />
+            <div className="absolute inset-0 opacity-20 pointer-events-none bg-[linear-gradient(-45deg,transparent_49%,white_49%,white_51%,transparent_51%)] bg-[length:100px_100px]" />
+            
+            <motion.button
+              onClick={() => setIsUnveiling(true)}
+              className="relative z-10 px-12 py-4 text-xl font-bold tracking-[0.2em] text-indigo-600 bg-white shadow-2xl hover:bg-indigo-50 transition-colors uppercase cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0, transition: { duration: 0.5 } }}
+            >
+              Unfold Paper
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {props.topBar}
       <div className="pointer-events-none absolute inset-0">
         {[0, 1, 2, 3, 4].map((idx) => (

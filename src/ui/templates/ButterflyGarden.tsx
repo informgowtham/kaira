@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useMemo } from 'react'
 import type { SignatureTemplateProps } from './signatureTypes'
 
 function Butterfly({ className = '' }: { className?: string }) {
@@ -12,9 +13,62 @@ function Butterfly({ className = '' }: { className?: string }) {
 
 export function ButterflyGarden(props: SignatureTemplateProps) {
   const title = props.title || (props.recipientName ? `Happy Birthday ${props.recipientName}` : 'A Butterfly Garden')
+  const [startedReveal, setStartedReveal] = useState(false)
+
+  const butterflies = useMemo(() => {
+    return Array.from({ length: 100 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      scale: Math.random() * 1.5 + 0.5,
+      rotate: Math.random() * 360,
+      angle: Math.random() * Math.PI * 2,
+      dist: 1000 + Math.random() * 1000,
+      duration: 2 + Math.random(),
+      rotExit: (Math.random() - 0.5) * 1080
+    }))
+  }, [])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white text-purple-950">
+      <AnimatePresence onExitComplete={() => {
+        if (startedReveal) {
+          props.onRevealComplete?.()
+        }
+      }}>
+        {props.isRevealing && !startedReveal && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-purple-950/95 backdrop-blur-sm"
+            exit={{ opacity: 0, transition: { duration: 2.5, ease: 'easeInOut' } }}
+          >
+            {butterflies.map((b, i) => (
+              <motion.div
+                key={i}
+                className="absolute"
+                style={{ left: b.left, top: b.top }}
+                initial={{ scale: b.scale, rotate: b.rotate }}
+                exit={{
+                  x: Math.cos(b.angle) * b.dist,
+                  y: Math.sin(b.angle) * b.dist,
+                  rotate: b.rotExit,
+                  transition: { duration: b.duration, ease: 'easeOut' }
+                }}
+              >
+                <Butterfly />
+              </motion.div>
+            ))}
+            <motion.button
+              className="relative z-10 rounded-full bg-white px-12 py-6 text-2xl font-black tracking-[0.2em] text-purple-900 shadow-[0_0_60px_rgba(255,255,255,0.7)]"
+              whileHover={{ scale: 1.05, boxShadow: '0 0 80px rgba(255,255,255,1)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setStartedReveal(true)}
+              exit={{ scale: 0, opacity: 0, transition: { duration: 0.5 } }}
+            >
+              UNVEIL
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {props.topBar}
       <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1200 800" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0 650 C180 280 330 850 560 360 C760 -40 910 560 1200 220" fill="none" stroke="#d4d4d8" strokeDasharray="20 20" strokeWidth="8" opacity=".8" />

@@ -11,8 +11,8 @@
  * glossy black vinyl record slides out and spins 360 degrees.
  */
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { SignatureTemplateProps } from './signatureTypes'
 
 const WOOD_CSS = `
@@ -33,12 +33,73 @@ const ALBUM_COVERS = [
   { bg: '#f4a261', label: '#e76f51', text: '#3c1800', border: '#2a9d8f', accent: '#fff3e3' },
 ]
 
-export function VinylLounge(props: SignatureTemplateProps) {
+export function VinylLounge(props: SignatureTemplateProps & { isRevealing?: boolean; onRevealComplete?: () => void }) {
+  const [showOverlay, setShowOverlay] = useState(props.isRevealing)
+
+  useEffect(() => {
+    if (props.isRevealing) setShowOverlay(true)
+  }, [props.isRevealing])
+
   const { messages, recipientName } = props
   const title = props.title || (recipientName ? `${recipientName}'s Album Lounge 📻` : 'The Vinyl Lounge 📻')
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden text-[#ffe3cc] font-sans wood-wall">
+    <>
+      <AnimatePresence onExitComplete={() => { if (!showOverlay) props.onRevealComplete?.() }}>
+        {showOverlay && (
+          <motion.div 
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#111]"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 1, delay: 2 } }}
+          >
+            {/* Record Sleeve */}
+            <motion.div
+              className="absolute inset-0 z-20 flex items-center justify-center bg-[#e55934] shadow-2xl border-r-[20px] border-[#c0392b]"
+              exit={{ x: '-100%', transition: { duration: 1.5, ease: 'easeInOut' } }}
+            >
+              <div className="w-96 h-96 border-4 border-[#ffecd1]/20 rounded-lg flex items-center justify-center">
+                <span className="text-[#ffecd1] font-black text-6xl tracking-tighter opacity-50">STEREO</span>
+              </div>
+            </motion.div>
+
+            {/* Vinyl Record */}
+            <motion.div
+              className="absolute z-10 w-[800px] h-[800px] rounded-full bg-[#111] shadow-2xl border-4 border-neutral-800 flex items-center justify-center"
+              style={{ backgroundImage: 'radial-gradient(circle, #1a1a1a 20%, #111111 60%)' }}
+              initial={{ x: 0, rotate: 0 }}
+              exit={{ 
+                x: '0%', 
+                rotate: 720, 
+                scale: 5, 
+                opacity: 0,
+                transition: { duration: 2.5, ease: 'easeInOut', delay: 0.5 } 
+              }}
+            >
+              {/* Grooves */}
+              <div className="absolute inset-10 rounded-full border border-neutral-700 opacity-40" />
+              <div className="absolute inset-20 rounded-full border border-neutral-800 opacity-60" />
+              <div className="absolute inset-40 rounded-full border border-neutral-700 opacity-30" />
+              
+              {/* Label */}
+              <div className="w-64 h-64 rounded-full bg-[#fde68a] border-4 border-[#111] flex items-center justify-center flex-col relative">
+                <span className="text-[#270800] font-black text-2xl mb-4">KAIRA RECORD CO.</span>
+                <div className="w-6 h-6 rounded-full bg-[#111] absolute center" />
+              </div>
+            </motion.div>
+
+            <motion.button
+              className="relative z-30 px-8 py-4 font-black text-xl text-[#111] bg-[#fde68a] rounded-full shadow-[0_10px_30px_rgba(253,230,138,0.4)] transition-transform uppercase tracking-widest"
+              onClick={() => setShowOverlay(false)}
+              exit={{ scale: 0, opacity: 0, transition: { duration: 0.5 } }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Play Record
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="relative min-h-screen w-full overflow-hidden text-[#ffe3cc] font-sans wood-wall">
       {props.topBar}
       <style dangerouslySetInnerHTML={{ __html: WOOD_CSS }} />
 
@@ -95,6 +156,7 @@ export function VinylLounge(props: SignatureTemplateProps) {
         </footer>
       </div>
     </div>
+    </>
   )
 }
 
