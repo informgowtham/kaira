@@ -101,13 +101,18 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Dev-friendly CORS: allow common local Vite ports/hosts.
+      const customOrigins = (process.env.CORS_ORIGIN || '')
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean)
+
       const allowlist = new Set([
-        process.env.CORS_ORIGIN || '',
+        ...customOrigins,
         'http://127.0.0.1:4173',
         'http://localhost:4173',
         'http://127.0.0.1:5173',
         'http://localhost:5173',
-      ].filter(Boolean))
+      ])
 
       if (!origin) return callback(null, true)
       if (allowlist.has(origin)) return callback(null, true)
