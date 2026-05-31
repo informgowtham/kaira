@@ -46,6 +46,14 @@ export function MessageComposerModal(props: {
     return () => clearTimeout(handler)
   }, [gifQuery])
 
+  const placeholders = [
+    "Share a memory that always makes you smile...",
+    "What do you appreciate most about them?",
+    "Send a heartfelt wish or a funny inside joke...",
+    "Write something warm, funny, or deeply personal..."
+  ]
+  const [placeholder] = useState(() => placeholders[Math.floor(Math.random() * placeholders.length)])
+
   const canSubmit = useMemo(() => Boolean(text.trim()) && !lockedReason, [text, lockedReason])
 
   return (
@@ -77,7 +85,7 @@ export function MessageComposerModal(props: {
             className="mt-1 min-h-[120px] w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 kb-ring resize-none"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Write something warm, funny, or heartfelt..."
+            placeholder={placeholder}
             disabled={Boolean(lockedReason)}
           />
         </div>

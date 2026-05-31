@@ -147,7 +147,7 @@ export function RevealPage() {
             stage === 'ending' ? (
               <div className="mx-auto flex max-w-6xl flex-col gap-3 rounded-2xl border border-white/10 bg-black/25 p-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between relative z-50">
                 <div>
-                  <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
+                  <div className="text-lg font-semibold text-white">A collective hug from {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
                   <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -184,9 +184,9 @@ export function RevealPage() {
             >
               <div className="inline-flex items-center gap-2 rounded-full bg-black/30 border border-white/10 px-3 py-1 text-xs text-white/75">
                 <Sparkles size={14} />
-                A surprise is waiting for you
+                Someone gathered a few thoughts for you...
               </div>
-              <h1 className="mt-5 text-4xl sm:text-5xl font-semibold text-white tracking-tight">A surprise is waiting for you</h1>
+              <h1 className="mt-5 text-4xl sm:text-5xl font-semibold text-white tracking-tight">Someone gathered a few thoughts for you...</h1>
               <p className="mt-3 text-base sm:text-lg text-white/75">
                 {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'} came together to celebrate you
               </p>
@@ -236,10 +236,10 @@ export function RevealPage() {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/30 border border-white/10 px-3 py-1 text-xs text-white/75">
                   <Heart size={14} />
-                  Made with love
+                  A collective hug
                 </div>
                 <h1 className="mt-4 text-3xl sm:text-4xl font-semibold text-white tracking-tight">{board.title}</h1>
-                <p className="mt-2 text-sm sm:text-base text-white/75">Messages arrive with gentle motion instead of all at once.</p>
+                <p className="mt-2 text-sm sm:text-base text-white/75">Here is everything people wanted to share with you.</p>
               </div>
 
               <div className="mt-6">
@@ -260,7 +260,7 @@ export function RevealPage() {
               {stage === 'ending' ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                   <div>
-                    <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
+                    <div className="text-lg font-semibold text-white">A collective hug from {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
                     <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
                   </div>
                   <div className="flex flex-wrap gap-2">

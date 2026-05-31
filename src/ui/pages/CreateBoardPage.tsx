@@ -110,16 +110,16 @@ export function CreateBoardPage() {
 
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-3">
             <Surface className="p-5 lg:col-span-1">
-              <div className="text-sm font-semibold text-white">Delivery setup</div>
-              <div className="mt-2 text-xs text-white/60">Name</div>
+              <div className="text-sm font-semibold text-white">Who are we celebrating?</div>
+              <div className="mt-2 text-xs text-white/60">Their Name</div>
               <input
                 className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 kb-ring"
                 value={recipientName}
-                placeholder="e.g., Sarah"
+                placeholder="e.g., Sarah, or 'The Engineering Team'"
                 onChange={(e) => setRecipientName(e.target.value)}
               />
 
-              <div className="mt-4 text-xs text-white/60">Recipient email</div>
+              <div className="mt-4 text-xs text-white/60">Where should we send the magic? (Email)</div>
               <input
                 className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 kb-ring"
                 value={recipientEmail}
@@ -131,11 +131,11 @@ export function CreateBoardPage() {
               )}
 
               <div className="mt-4">
-                <DateTimePicker value={deliveryAt} onChange={setDeliveryAt} min={new Date(Date.now() + 60_000)} label="Delivery date & time" />
+                <DateTimePicker value={deliveryAt} onChange={setDeliveryAt} min={new Date(Date.now() + 60_000)} label="When should we deliver it?" />
                 {deliveryAt ? (deliveryOk ? null : <div className="mt-2 text-xs text-rose-200">Pick a time in the future.</div>) : null}
               </div>
 
-              <div className="mt-5 text-sm font-semibold text-white">Occasion</div>
+              <div className="mt-5 text-sm font-semibold text-white">What's the occasion?</div>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {OCCASIONS.map((o) => (
                   <button

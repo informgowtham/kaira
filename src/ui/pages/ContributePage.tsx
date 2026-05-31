@@ -116,10 +116,10 @@ export function ContributePage() {
           <div className="p-6 sm:p-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-black/30 border border-white/10 px-3 py-1 text-xs text-white/70">
               <HeartHandshake size={14} />
-              Anyone can add messages, no login needed
+              Join the celebration
             </div>
             <h1 className="mt-4 text-3xl sm:text-4xl font-semibold text-white tracking-tight">{board.title}</h1>
-            <p className="mt-2 text-sm text-white/75">Add your message, a GIF URL, or an image URL to help build the surprise.</p>
+            <p className="mt-2 text-sm text-white/75">Add a heartfelt message, a funny GIF, or a favorite memory to help build the surprise. No login required.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => setShowAdd(true)} disabled={loading}>
                 Add Message

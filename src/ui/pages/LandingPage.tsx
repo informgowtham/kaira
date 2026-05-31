@@ -17,7 +17,7 @@ const CATEGORIES = [
 export function LandingPage() {
   const navigate = useNavigate()
   const user = useAppStore((s) => s.user)
-  useSEO('Welcome', 'Turn group messages into lasting memories.')
+  useSEO('Welcome', 'Turn fleeting moments into unforgettable memories.')
 
   return (
     <div className="min-h-screen kb-grid kb-page">
@@ -38,14 +38,14 @@ export function LandingPage() {
             </div>
 
             <h1 className="mt-5 text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[0.95] tracking-tight text-white">
-              Make every
-              <span className="block bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-200 bg-clip-text text-transparent">
-                celebration glow
+              Turn fleeting moments into
+              <span className="block bg-gradient-to-r from-pink-300 via-yellow-200 to-cyan-200 bg-clip-text text-transparent pb-2">
+                unforgettable memories
               </span>
             </h1>
             <p className="mt-4 max-w-2xl text-base sm:text-lg text-white/76 leading-relaxed">
-              Collect messages, GIFs, and memories from everyone, then deliver a colorful reveal that feels like stepping
-              into the party instead of opening a plain board.
+              Gather heartfelt messages, photos, and joy from everyone who matters. Deliver a cinematic, 
+              collaborative experience that feels like a collective hug.
             </p>
 
             <div className="mt-7 flex flex-col sm:flex-row gap-3">
@@ -155,21 +155,21 @@ export function LandingPage() {
 
         <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-3">
           <Surface className="p-5 kb-glow-border">
-            <div className="text-sm font-semibold text-white">Emotion-first</div>
+            <div className="text-sm font-semibold text-white">Designed for human connection</div>
             <div className="mt-1 text-sm text-white/70 leading-relaxed">
-              Every interaction is designed to feel warm, human, and memorable.
+              Every interaction feels warm, personal, and deeply memorable.
             </div>
           </Surface>
           <Surface className="p-5 kb-glow-border">
-            <div className="text-sm font-semibold text-white">Frictionless collaboration</div>
+            <div className="text-sm font-semibold text-white">Effortless joy</div>
             <div className="mt-1 text-sm text-white/70 leading-relaxed">
-              Share a link. Contributors add messages instantly, no signup required.
+              Share a single link and let everyone add their voice instantly—no signups required.
             </div>
           </Surface>
           <Surface className="p-5 kb-glow-border">
             <div className="text-sm font-semibold text-white">Cinematic reveal</div>
             <div className="mt-1 text-sm text-white/70 leading-relaxed">
-              Anticipation screen, 3D card opening, confetti, and progressive message storytelling.
+              Anticipation screens, 3D card openings, confetti, and progressive storytelling.
             </div>
           </Surface>
         </div>

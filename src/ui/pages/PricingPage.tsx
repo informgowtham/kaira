@@ -17,9 +17,9 @@ export function PricingPage() {
       <TopBar compact />
       <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-12">
         <div className="max-w-2xl">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">Simple pricing for meaningful celebrations</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">Celebrate without limits.</h1>
           <p className="mt-2 text-sm sm:text-base text-white/70">
-            This is a UI-only preview of the monetization gateway. You can switch plans to test premium experiences.
+            Whether it's a single milestone or a lifetime of memories, choose the plan that fits your joy.
           </p>
         </div>
 
@@ -67,9 +67,9 @@ export function PricingPage() {
               {billing === 'monthly' ? '$19' : '$182'}
               <span className="ml-2 text-base font-normal text-white/55">{billing === 'monthly' ? '/month' : '/year'}</span>
             </div>
-            <div className="mt-1 text-sm text-white/60">Premium reveal, themes, scheduling, and downloads</div>
+            <div className="mt-1 text-sm text-white/60">Immersive reveals, exclusive themes, scheduling, and keepsakes</div>
             <div className="mt-5 grid gap-3 text-sm text-white/75">
-              {['Unlimited boards', 'Unlimited messages', 'Scheduled delivery', 'Download as memory', 'No watermark', 'Premium cinematic reveal', 'Premium themes'].map((item) => (
+              {['Unlimited boards', 'Unlimited messages', 'Scheduled delivery', 'Download as memory', 'No watermark', 'Immersive, cinematic reveal', 'Premium exclusive themes'].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <Check size={16} className="text-amber-200" />
                   <span>{item}</span>
