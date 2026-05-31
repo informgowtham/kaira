@@ -14,6 +14,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { RequireAuth } from './components/RequireAuth'
 import { RequireAdmin } from './components/RequireAdmin'
 import { useAppStore } from './store/useAppStore'
+import { TemplatePreviewApp } from './templates/TemplatePreviewApp'
 
 export function App() {
   const bootstrap = useAppStore((s) => s.bootstrap)
@@ -66,6 +67,7 @@ export function App() {
         <Route path="/c/:boardId/:token" element={<ContributePage />} />
         <Route path="/r/:boardId/:token" element={<RevealPage />} />
 
+        <Route path="/template-preview" element={<TemplatePreviewApp />} />
         <Route path="/app/*" element={<Navigate to="/app" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

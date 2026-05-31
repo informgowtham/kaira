@@ -184,6 +184,13 @@ export async function uploadFile(file: File) {
   return `${API_BASE === '/' ? '' : API_BASE}${payload.url}`
 }
 
+export async function fetchGifs(query: string) {
+  const normalized = query.trim()
+  const url = normalized ? `/api/gifs?q=${encodeURIComponent(normalized)}` : '/api/gifs'
+  const payload = await request<{ gifs: any[] }>(url)
+  return payload.gifs
+}
+
 export async function removeBoard(boardId: string) {
   await request<{ ok: boolean }>(`/api/boards/${boardId}`, { method: 'DELETE' })
 }

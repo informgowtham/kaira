@@ -47,7 +47,7 @@ export function MessageCard(props: { message: Message; accent?: 'violet' | 'blue
           </div>
         </div>
 
-        <div className="mt-3 text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{message.text}</div>
+        <div className="mt-3 text-sm text-white/85 leading-relaxed whitespace-pre-wrap line-clamp-8">{message.text}</div>
 
         {message.gifUrl ? (
           <div className="mt-3 overflow-hidden rounded-lg border border-white/10 bg-black/30">
@@ -65,7 +65,7 @@ export function MessageCard(props: { message: Message; accent?: 'violet' | 'blue
       </div>
 
       <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
-        <div className="text-xs text-white/60">Card</div>
+        <div className="text-xs text-white/60">{new Date(message.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</div>
         <div className="text-sm">{stickerGlyph(message.sticker)}</div>
       </div>
     </motion.div>

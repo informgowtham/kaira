@@ -11,6 +11,7 @@ import { authMiddleware, signAuthToken, type AuthedUser } from './auth'
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'placeholder-client-id'
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID)
+const KLIPY_API_KEY = process.env.KLIPY_API_KEY || ''
 
 type ReqUser = Express.Request & { user: AuthedUser }
 
@@ -117,6 +118,32 @@ app.use(
 )
 app.use(express.json({ limit: '2mb' }))
 app.use('/uploads', express.static(UPLOADS_DIR))
+
+app.get('/api/gifs', async (req, res) => {
+  if (!KLIPY_API_KEY) {
+    res.status(503).json({ error: 'GIF provider is not configured' })
+    return
+  }
+
+  const query = typeof req.query.q === 'string' ? req.query.q.trim() : ''
+  const endpoint = query
+    ? `https://api.klipy.com/api/v1/${KLIPY_API_KEY}/gifs/search?q=${encodeURIComponent(query)}&per_page=12`
+    : `https://api.klipy.com/api/v1/${KLIPY_API_KEY}/gifs/trending?per_page=12`
+
+  try {
+    const response = await fetch(endpoint)
+    if (!response.ok) {
+      res.status(502).json({ error: 'GIF provider request failed' })
+      return
+    }
+    const json = await response.json() as { data?: any }
+    const results = json?.data?.data || json?.data || []
+    res.json({ gifs: results })
+  } catch (error) {
+    console.error('GIF proxy error:', error)
+    res.status(502).json({ error: 'Failed to fetch GIFs' })
+  }
+})
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {

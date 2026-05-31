@@ -1,0 +1,68 @@
+import { motion } from 'framer-motion'
+import type { SignatureTemplateProps } from './signatureTypes'
+
+const PETALS = Array.from({ length: 18 }, (_, idx) => ({
+  left: `${(idx * 17) % 96}%`,
+  delay: `${-(idx % 7) * 0.7}s`,
+  size: 12 + (idx % 4) * 5,
+}))
+
+export function FloralLetterpress(props: SignatureTemplateProps) {
+  const title = props.title || (props.recipientName ? `For ${props.recipientName}` : 'A Floral Celebration')
+  const messages = props.messages
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[#fff8ef] text-[#3d2430]">
+      {props.topBar}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(244,114,182,.22),transparent_30%),radial-gradient(circle_at_86%_12%,rgba(251,191,36,.18),transparent_28%),linear-gradient(120deg,rgba(255,255,255,.5),transparent)]" />
+      <div className="pointer-events-none absolute inset-6 rounded-[2rem] border border-rose-200/80 shadow-[inset_0_0_0_8px_rgba(255,255,255,.42)]" />
+      {PETALS.map((petal, idx) => (
+        <motion.div
+          key={idx}
+          className="pointer-events-none absolute top-[-40px] rounded-[70%_30%_70%_30%] bg-rose-300/50"
+          style={{ left: petal.left, width: petal.size, height: petal.size * 1.5, animationDelay: petal.delay }}
+          animate={{ y: ['0vh', '110vh'], rotate: [0, 180, 360], x: [0, idx % 2 ? 28 : -28, 0] }}
+          transition={{ duration: 13 + (idx % 5), repeat: Infinity, ease: 'linear', delay: idx * 0.25 }}
+        />
+      ))}
+
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-8">
+        <header className="mx-auto max-w-3xl text-center">
+          <div className="font-serif text-sm uppercase tracking-[.28em] text-rose-700/70">Pressed Floral Card</div>
+          <h1 className="mt-3 font-serif text-4xl font-semibold tracking-tight text-rose-950 sm:text-6xl">{title}</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-rose-950/65">
+            Soft letterpress paper, blooming details, and handwritten wishes.
+          </p>
+          {props.actionSlot ? <div className="mt-5 flex flex-wrap justify-center gap-2">{props.actionSlot}</div> : null}
+        </header>
+
+        {messages.length === 0 ? (
+          <div className="mt-10">{props.emptyState}</div>
+        ) : (
+          <main className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {messages.map((message, idx) => (
+              <motion.article
+                key={message.id}
+                className="relative rounded-[1.25rem] border border-rose-200 bg-white/78 p-5 shadow-[0_22px_55px_rgba(103,45,73,.16)]"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(idx * 0.08, 1.5) }}
+              >
+                <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-rose-200/70 blur-sm" />
+                <div className="relative">
+                  <div className="font-serif text-lg text-rose-950">{message.displayName || 'Someone'}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[.2em] text-rose-700/45">{new Date(message.createdAt).toLocaleDateString()}</div>
+                  <p className="mt-4 whitespace-pre-wrap line-clamp-8 text-sm leading-7 text-[#4f2f3b]">{message.text}</p>
+                  {(message.gifUrl || message.imageUrl) ? (
+                    <img src={message.gifUrl || message.imageUrl} alt="" className="mt-4 max-h-44 w-full rounded-xl object-cover" />
+                  ) : null}
+                </div>
+              </motion.article>
+            ))}
+          </main>
+        )}
+        {props.footerSlot ? <div className="mt-8">{props.footerSlot}</div> : null}
+      </div>
+    </div>
+  )
+}

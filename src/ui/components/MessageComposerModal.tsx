@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react'
 import { Image, PartyPopper, Sparkles, Upload, Loader2, X, Search } from 'lucide-react'
 import { Button } from './Button'
 import { Modal } from './Modal'
-import { uploadFile } from '../store/api'
+import { fetchGifs, uploadFile } from '../store/api'
 
 const EMOJIS = ['🎉', '💛', '✨', '🙌', '👏', '🌟', '🥳', '💐', '🔥', '🎂']
 
@@ -26,39 +26,23 @@ export function MessageComposerModal(props: {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Klipy Search Effect
+  // GIF search via backend proxy (keeps provider key server-side).
   useEffect(() => {
-    const fetchGifs = async () => {
+    const loadGifs = async () => {
       try {
         setIsSearchingGifs(true)
-        const apiKey = import.meta.env.VITE_KLIPY_API_KEY
-        if (!apiKey) {
-          setUploadError('Klipy API key missing. Please add VITE_KLIPY_API_KEY to your .env file.')
-          setIsSearchingGifs(false)
-          return
-        }
-
-        const query = gifQuery.trim()
-        const endpoint = query 
-          ? `https://api.klipy.com/api/v1/${apiKey}/gifs/search?q=${encodeURIComponent(query)}&per_page=12`
-          : `https://api.klipy.com/api/v1/${apiKey}/gifs/trending?per_page=12`
-        
-        const res = await fetch(endpoint)
-        const json = await res.json()
-        
-        // Klipy response is typically { data: { data: [...] } } or similar
-        const results = json.data?.data || json.data || []
+        const results = await fetchGifs(gifQuery)
         setGifs(results)
         setUploadError(null)
       } catch (err) {
-        console.error('Klipy search error:', err)
-        setUploadError('Failed to fetch GIFs from Klipy.')
+        console.error('GIF search error:', err)
+        setUploadError('Failed to fetch GIFs right now.')
       } finally {
         setIsSearchingGifs(false)
       }
     }
 
-    const handler = setTimeout(fetchGifs, 500)
+    const handler = setTimeout(loadGifs, 500)
     return () => clearTimeout(handler)
   }, [gifQuery])
 

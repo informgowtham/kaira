@@ -11,6 +11,8 @@ import { useAppStore } from '../store/useAppStore'
 import { useSEO } from '../utils/seo'
 import { DateTimePicker } from '../components/DateTimePicker'
 import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
+import { SIGNATURE_TEMPLATES, getSignatureTemplate, signatureTemplatesForOccasion } from '../templates/registry'
+import { SignatureTemplatePreview } from '../templates/SignatureTemplatePreview'
 
 function isValidEmail(value: string) {
   const v = value.trim()
@@ -43,6 +45,8 @@ export function CreateBoardPage() {
   const [occasion, setOccasion] = useState<Occasion>(initialOccasion)
   const [themeId, setThemeId] = useState<string>(() => {
     const requested = initialTheme ? THEMES.find((t) => t.id === initialTheme) : undefined
+    const requestedSignature = initialTheme ? getSignatureTemplate(initialTheme) : undefined
+    if (requestedSignature && requestedSignature.category === initialOccasion) return requestedSignature.id
     if (requested && requested.category === initialOccasion) return requested.id
     const first = THEMES.find((t) => t.category === initialOccasion)
     return first?.id ?? THEMES.find((t) => t.category === 'birthday')?.id ?? THEMES[0].id
@@ -54,6 +58,11 @@ export function CreateBoardPage() {
     setOccasion(urlOccasion)
     if (urlTheme) {
       const requested = THEMES.find((t) => t.id === urlTheme)
+      const requestedSignature = getSignatureTemplate(urlTheme)
+      if (requestedSignature && requestedSignature.category === urlOccasion) {
+        setThemeId(requestedSignature.id)
+        return
+      }
       if (requested && requested.category === urlOccasion) {
         setThemeId(requested.id)
         return
@@ -65,24 +74,28 @@ export function CreateBoardPage() {
 
   useEffect(() => {
     const t = THEMES.find((x) => x.id === themeId)
-    if (!t || t.category !== occasion) {
+    const signature = getSignatureTemplate(themeId)
+    if ((!t || t.category !== occasion) && (!signature || signature.category !== occasion)) {
       const first = THEMES.find((x) => x.category === occasion)
       if (first) setThemeId(first.id)
     }
   }, [occasion, themeId])
 
   const selectedTheme = useMemo(() => THEMES.find((t) => t.id === themeId) ?? THEMES[0], [themeId])
+  const selectedSignature = useMemo(() => getSignatureTemplate(themeId), [themeId])
   const occasionThemes = useMemo(() => THEMES.filter((t) => t.category === occasion), [occasion])
+  const occasionSignatures = useMemo(() => signatureTemplatesForOccasion(occasion).filter((t) => t.category === occasion), [occasion])
   const topThemes = useMemo(() => {
     const rank = (animatedBackground?: string) => {
       if (animatedBackground === 'petal-drift') return 0
       if (animatedBackground === 'bloom-shimmer') return 1
       return 2
     }
-    return [...occasionThemes]
+    const classic = [...occasionThemes]
       .sort((a, b) => rank(a.animatedBackground) - rank(b.animatedBackground))
-      .slice(0, 3)
-  }, [occasionThemes])
+      .slice(0, Math.max(1, 3 - Math.min(2, occasionSignatures.length)))
+    return [...occasionSignatures.slice(0, 2), ...classic]
+  }, [occasionThemes, occasionSignatures])
   const emailOk = isValidEmail(recipientEmail)
   const deliveryOk = deliveryAt ? deliveryAt.getTime() > Date.now() : false
   const canCreate = Boolean(recipientName.trim()) && emailOk && deliveryOk && !loading
@@ -178,7 +191,11 @@ export function CreateBoardPage() {
                         }`}
                         onClick={() => setThemeId(theme.id)}
                       >
-                        <ThemeBackground theme={theme} className="h-16 w-full rounded-lg border border-white/10" />
+                        {'previewTone' in theme ? (
+                          <SignatureTemplatePreview template={theme} className="h-16 w-full rounded-lg border border-white/10" />
+                        ) : (
+                          <ThemeBackground theme={theme} className="h-16 w-full rounded-lg border border-white/10" />
+                        )}
                         <div className="mt-2 text-xs font-semibold text-white truncate">{theme.name}</div>
                       </button>
                     )
@@ -197,7 +214,12 @@ export function CreateBoardPage() {
 
               <div className="mt-4 kb-glass rounded-xl p-4 border border-white/10">
                 <div className="text-sm font-semibold text-white">Preview</div>
-                <ThemePreview theme={selectedTheme} recipientName={recipientName.trim()} deliveryAt={deliveryAt} />
+                <ThemePreview
+                  theme={selectedSignature ? undefined : selectedTheme}
+                  signature={selectedSignature}
+                  recipientName={recipientName.trim()}
+                  deliveryAt={deliveryAt}
+                />
               </div>
 
               <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -233,7 +255,8 @@ export function CreateBoardPage() {
 }
 
 function ThemePreview(props: {
-  theme: (typeof THEMES)[number]
+  theme?: (typeof THEMES)[number]
+  signature?: (typeof SIGNATURE_TEMPLATES)[number]
   recipientName: string
   deliveryAt: Date | null
 }) {
@@ -243,7 +266,12 @@ function ThemePreview(props: {
     : 'Delivery scheduled soon'
 
   return (
-    <ThemeBackground theme={props.theme} className="mt-3 min-h-[300px] rounded-xl border border-white/10">
+    props.signature ? (
+      <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
+        <SignatureTemplatePreview template={props.signature} recipientName={props.recipientName} className="min-h-[300px]" />
+      </div>
+    ) : (
+    <ThemeBackground theme={props.theme ?? THEMES[0]} className="mt-3 min-h-[300px] rounded-xl border border-white/10">
       <div className="relative z-10 flex min-h-[300px] flex-col justify-between p-5">
         <div>
           <div className="inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs text-white/75">
@@ -272,5 +300,6 @@ function ThemePreview(props: {
         </div>
       </div>
     </ThemeBackground>
+    )
   )
 }

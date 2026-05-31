@@ -11,6 +11,8 @@ import { useAppStore } from '../store/useAppStore'
 import { getThemeById, messagesForBoard } from '../store/selectors'
 import { useSEO } from '../utils/seo'
 import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
+import { getSignatureTemplate } from '../templates/registry'
+import { SignatureTemplateRenderer } from '../templates/SignatureTemplateRenderer'
 
 export function ContributePage() {
   const { boardId = '', token = '' } = useParams()
@@ -25,6 +27,7 @@ export function ContributePage() {
   const board = useMemo(() => boards.find((b) => b.id === boardId && b.contributorToken === token), [boards, boardId, token])
   const boardMessages = useMemo(() => messagesForBoard(messages, boardId), [messages, boardId])
   const theme = getThemeById(board?.themeId)
+  const signatureTemplate = getSignatureTemplate(board?.themeId)
 
   useEffect(() => {
     if (boardId && token) void hydratePublicBoard(boardId, token)
@@ -43,6 +46,64 @@ export function ContributePage() {
           </Surface>
         </div>
       </div>
+    )
+  }
+
+  if (signatureTemplate) {
+    return (
+      <>
+        <SignatureTemplateRenderer
+          templateId={signatureTemplate.id}
+          mode="contributor"
+          topBar={<TopBar compact />}
+          title={board.title}
+          recipientName={board.recipientName}
+          messages={boardMessages}
+          actionSlot={
+            <>
+              <Button variant="primary" onClick={() => setShowAdd(true)} disabled={loading}>
+                Add Message
+              </Button>
+              <Button
+                variant="secondary"
+                left={<Link2 size={16} />}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(window.location.href)
+                  } catch {
+                    // ignore
+                  }
+                }}
+              >
+                Copy Link
+              </Button>
+            </>
+          }
+          emptyState={
+            <Surface className="p-6 text-center">
+              <div className="text-white text-lg font-semibold">Be the first to write something</div>
+              <div className="mt-1 text-sm text-white/70">A heartfelt note, inside joke, or photo can set the tone.</div>
+              <Button className="mt-4" variant="secondary" onClick={() => setShowAdd(true)}>
+                Add your message
+              </Button>
+            </Surface>
+          }
+        />
+        {error ? <div className="fixed bottom-4 left-4 z-50 rounded-xl bg-rose-950/90 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+        <MessageComposerModal
+          open={showAdd}
+          title="Add your message"
+          onClose={() => setShowAdd(false)}
+          lockedReason={
+            board.status === 'delivered' || board.status === 'archived'
+              ? 'This board is locked and delivered.'
+              : null
+          }
+          onSubmit={async (msg) => {
+            await addPublicBoardMessage(board.id, token, { ...msg, sticker: 'heart' })
+          }}
+        />
+      </>
     )
   }
 

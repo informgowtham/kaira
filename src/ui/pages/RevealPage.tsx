@@ -1,13 +1,12 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Float, RoundedBox } from '@react-three/drei'
 import confetti from 'canvas-confetti'
 import { 
   Loader2, Heart, Play, Sparkles, FileDown, FileText, Download 
 } from 'lucide-react'
-import type { Group } from 'three'
+
+const RevealOpeningCanvas = lazy(() => import('./RevealScenes'))
 
 import { TopBar } from '../components/TopBar'
 import { Surface } from '../components/Surface'
@@ -19,7 +18,9 @@ import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
 import { getReveal } from '../store/api'
 import { getThemeById } from '../store/selectors'
 import { useSEO } from '../utils/seo'
-import type { Board, Message, BoardTheme } from '../store/types'
+import type { Board, Message } from '../store/types'
+import { getSignatureTemplate } from '../templates/registry'
+import { SignatureTemplateRenderer } from '../templates/SignatureTemplateRenderer'
 
 export function RevealPage() {
   const { boardId = '', token = '' } = useParams()
@@ -92,7 +93,7 @@ export function RevealPage() {
 
   useEffect(() => {
     if (stage === 'messages') {
-      const timeout = window.setTimeout(() => setStage('ending'), 2200)
+      const timeout = window.setTimeout(() => setStage('ending'), Math.min(revealMessages.length * 120, 3000) + 1000)
       return () => window.clearTimeout(timeout)
     }
   }, [stage])
@@ -124,6 +125,40 @@ export function RevealPage() {
     )
   }
 
+  const signatureTemplate = getSignatureTemplate(board.themeId)
+  if (signatureTemplate && (stage === 'messages' || stage === 'ending')) {
+    const displayMessages = revealMessages.length ? revealMessages : fallbackMessages()
+    return (
+      <SignatureTemplateRenderer
+        templateId={signatureTemplate.id}
+        mode="reveal"
+        topBar={<TopBar compact />}
+        title={board.title}
+        recipientName={board.recipientName}
+        messages={displayMessages}
+        footerSlot={
+          stage === 'ending' ? (
+            <div className="mx-auto flex max-w-6xl flex-col gap-3 rounded-2xl border border-white/10 bg-black/25 p-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
+                <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" left={<Download size={16} />} onClick={() => handleDownloadMemory('html')}>
+                  Download Memory
+                </Button>
+                <Button variant="secondary" onClick={() => { setOpened(false); setStage('anticipation') }}>
+                  Replay Celebration
+                </Button>
+                <Button variant="ghost" left={<Play size={16} />}>Share Reaction</Button>
+              </div>
+            </div>
+          ) : null
+        }
+      />
+    )
+  }
+
   return (
     <ThemeBackground theme={theme} className="min-h-screen overflow-hidden">
       <div className="kb-grid h-full">
@@ -145,7 +180,7 @@ export function RevealPage() {
               </div>
               <h1 className="mt-5 text-4xl sm:text-5xl font-semibold text-white tracking-tight">A surprise is waiting for you</h1>
               <p className="mt-3 text-base sm:text-lg text-white/75">
-                {revealMessages.length || 18} people came together to celebrate you
+                {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'} came together to celebrate you
               </p>
               <Button className="mt-6" variant="primary" onClick={() => setStage('opening')}>
                 Open Your Card
@@ -155,19 +190,13 @@ export function RevealPage() {
 
           {stage === 'opening' ? (
             <motion.div key="opening" className="relative z-10 m-auto h-[500px] w-full max-w-4xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Canvas camera={{ position: [0, 1.5, 6], fov: 45 }}>
-                <ambientLight intensity={1.5} />
-                <pointLight position={[10, 10, 10]} intensity={2} />
-                <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={2} />
-                
-                {theme.animatedBackground === 'balloons' || theme.animatedBackground === 'confetti' ? (
-                  <GiftBoxScene opened={opened} theme={theme} />
-                ) : theme.animatedBackground === 'galaxy' || theme.animatedBackground === 'stars' || theme.animatedBackground === 'floating-shapes' ? (
-                  <PortalScene opened={opened} theme={theme} />
-                ) : (
-                  <CardScene opened={opened} />
-                )}
-              </Canvas>
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+                </div>
+              }>
+                <RevealOpeningCanvas opened={opened} theme={theme} />
+              </Suspense>
               <div className="absolute inset-x-0 bottom-12 flex flex-col items-center gap-3">
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
@@ -212,7 +241,7 @@ export function RevealPage() {
                       key={message.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.12 }}
+                      transition={{ delay: Math.min(idx * 0.12, 1.5) }}
                     >
                       <MessageCard message={message} accent={idx % 3 === 0 ? 'violet' : idx % 3 === 1 ? 'blue' : 'teal'} />
                     </motion.div>
@@ -223,7 +252,7 @@ export function RevealPage() {
               {stage === 'ending' ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                   <div>
-                    <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 18} people</div>
+                    <div className="text-lg font-semibold text-white">Made with love by {revealMessages.length || 1} {(revealMessages.length || 1) === 1 ? 'person' : 'people'}</div>
                     <div className="mt-1 text-sm text-white/70">Replay this reveal anytime and keep the memory.</div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -268,6 +297,15 @@ export function RevealPage() {
   )
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function generateMemoryHtml(board: Board, messages: Message[]) {
   return `
 <!DOCTYPE html>
@@ -275,7 +313,7 @@ function generateMemoryHtml(board: Board, messages: Message[]) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory: ${board.title}</title>
+    <title>Memory: ${escapeHtml(board.title)}</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -380,20 +418,20 @@ function generateMemoryHtml(board: Board, messages: Message[]) {
 <body>
     <div class="container">
         <header>
-            <h1>${board.title}</h1>
-            <div class="meta">A memory created with love by ${messages.length} people</div>
+            <h1>${escapeHtml(board.title)}</h1>
+            <div class="meta">A memory created with love by ${messages.length} ${messages.length === 1 ? 'person' : 'people'}</div>
         </header>
         <div class="grid">
             ${messages.map(m => `
                 <div class="card">
                     <div class="card-header">
                         <div>
-                            <div class="author">${m.displayName || 'Someone'}</div>
+                            <div class="author">${escapeHtml(m.displayName || 'Someone')}</div>
                             <div class="date">${new Date(m.createdAt).toLocaleDateString()}</div>
                         </div>
                         ${m.emoji ? `<div class="emoji">${m.emoji}</div>` : ''}
                     </div>
-                    <div class="content">${m.text}</div>
+                    <div class="content">${escapeHtml(m.text)}</div>
                     ${m.gifUrl ? `<div class="media"><img src="${m.gifUrl}"></div>` : ''}
                     ${m.imageUrl ? `<div class="media"><img src="${m.imageUrl}"></div>` : ''}
                 </div>
@@ -415,116 +453,4 @@ function fallbackMessages() {
     { id: 'fallback-2', boardId: 'fallback', createdAt: now, text: 'Thanks for the calm, clarity, and laughs along the way.', displayName: 'Friends', emoji: '✨', sticker: 'sparkle' as const },
     { id: 'fallback-3', boardId: 'fallback', createdAt: now, text: 'Here is to more milestones, more joy, and more memories.', displayName: 'Everyone', emoji: '🌟', sticker: 'star' as const },
   ]
-}
-
-function GiftBoxScene(props: { opened: boolean; theme: BoardTheme }) {
-  const lidRef = useRef<Group>(null)
-
-  useFrame((_, delta) => {
-    if (props.opened && lidRef.current) {
-      lidRef.current.position.y += (4 - lidRef.current.position.y) * delta * 2
-      lidRef.current.rotation.x += (1.5 - lidRef.current.rotation.x) * delta * 2
-      lidRef.current.position.z += (-2 - lidRef.current.position.z) * delta * 2
-    }
-  })
-
-  return (
-    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-      <group position={[0, -0.5, 0]}>
-        {/* Main Box Body */}
-        <RoundedBox args={[2.5, 2.5, 2.5]} radius={0.05} smoothness={4}>
-          <meshStandardMaterial color="#ff4d4d" metalness={0.2} roughness={0.3} />
-        </RoundedBox>
-        {/* Ribbon Vertical */}
-        <RoundedBox args={[0.5, 2.52, 2.52]} radius={0.02} smoothness={2}>
-          <meshStandardMaterial color="#ffd700" metalness={0.6} roughness={0.2} />
-        </RoundedBox>
-        {/* Ribbon Horizontal */}
-        <RoundedBox args={[2.52, 0.5, 2.52]} radius={0.02} smoothness={2}>
-          <meshStandardMaterial color="#ffd700" metalness={0.6} roughness={0.2} />
-        </RoundedBox>
-
-        {/* Box Lid */}
-        <group ref={lidRef} position={[0, 1.3, 0]}>
-          <RoundedBox args={[2.7, 0.6, 2.7]} radius={0.05} smoothness={4} position={[0, 0, 0]}>
-            <meshStandardMaterial color="#ff4d4d" metalness={0.2} roughness={0.3} />
-          </RoundedBox>
-          {/* Lid Ribbons */}
-          <RoundedBox args={[0.55, 0.62, 2.72]} radius={0.02} smoothness={2}>
-            <meshStandardMaterial color="#ffd700" metalness={0.6} roughness={0.2} />
-          </RoundedBox>
-          <RoundedBox args={[2.72, 0.62, 0.55]} radius={0.02} smoothness={2}>
-            <meshStandardMaterial color="#ffd700" metalness={0.6} roughness={0.2} />
-          </RoundedBox>
-        </group>
-      </group>
-    </Float>
-  )
-}
-
-function PortalScene(props: { opened: boolean; theme: BoardTheme }) {
-  const ring1Ref = useRef<Group>(null)
-  const ring2Ref = useRef<Group>(null)
-  const coreRef = useRef<Group>(null)
-
-  useFrame((_, delta) => {
-    if (ring1Ref.current) ring1Ref.current.rotation.z += delta * 1.5
-    if (ring2Ref.current) ring2Ref.current.rotation.x += delta * 1.2
-    
-    if (props.opened && coreRef.current) {
-      coreRef.current.scale.setScalar(coreRef.current.scale.x + (15 - coreRef.current.scale.x) * delta * 1.5)
-    }
-  })
-
-  return (
-    <Float speed={2} rotationIntensity={0.5} floatIntensity={0.8}>
-      <group>
-        <group ref={ring1Ref}>
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[2.5, 0.05, 16, 100]} />
-            <meshStandardMaterial color="#a78bfa" emissive="#a78bfa" emissiveIntensity={2} />
-          </mesh>
-        </group>
-        <group ref={ring2Ref}>
-          <mesh rotation={[0, Math.PI / 2, 0]}>
-            <torusGeometry args={[2.8, 0.03, 16, 100]} />
-            <meshStandardMaterial color="#60a5fa" emissive="#60a5fa" emissiveIntensity={2} />
-          </mesh>
-        </group>
-        
-        <group ref={coreRef}>
-          <mesh>
-            <sphereGeometry args={[0.5, 32, 32]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={5} transparent opacity={0.9} />
-          </mesh>
-          <pointLight intensity={10} distance={5} color="#ffffff" />
-        </group>
-      </group>
-    </Float>
-  )
-}
-
-function CardScene(props: { opened: boolean }) {
-  const hingeRef = useRef<Group>(null)
-  useFrame((_, delta) => {
-    const target = props.opened ? -2.2 : 0
-    if (hingeRef.current) {
-      hingeRef.current.rotation.y += (target - hingeRef.current.rotation.y) * Math.min(1, delta * 3.8)
-    }
-  })
-
-  return (
-    <Float speed={1.4} rotationIntensity={0.25} floatIntensity={0.45}>
-      <group rotation={[0.1, -0.4, 0]}>
-        <RoundedBox args={[2.1, 3, 0.12]} radius={0.08} smoothness={4} position={[-1.05, 0, 0]}>
-          <meshStandardMaterial color="#f8fafc" metalness={0.1} roughness={0.4} />
-        </RoundedBox>
-        <group ref={hingeRef} position={[0, 0, 0]}>
-          <RoundedBox args={[2.1, 3, 0.12]} radius={0.08} smoothness={4} position={[1.05, 0, 0]}>
-            <meshStandardMaterial color="#f1f5f9" metalness={0.1} roughness={0.3} />
-          </RoundedBox>
-        </group>
-      </group>
-    </Float>
-  )
 }

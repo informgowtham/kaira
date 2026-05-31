@@ -18,6 +18,8 @@ import { getThemeById, messagesForBoard } from '../store/selectors'
 import { useSEO } from '../utils/seo'
 import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
 import { ThemePickerModal } from '../components/ThemePickerModal'
+import { getSignatureTemplate } from '../templates/registry'
+import { SignatureTemplateRenderer } from '../templates/SignatureTemplateRenderer'
 
 export function BoardPage() {
   const { boardId = '' } = useParams()
@@ -71,6 +73,157 @@ export function BoardPage() {
   const revealLink = `${window.location.origin}/r/${board.id}/${board.revealToken}`
   const waText = `Hey! We’re creating a surprise card for ${board.recipientName} 🎉 Add your message here: ${contributorLink}`
   const isFreeLimitReached = plan === 'free' && messages.length >= 20
+  const signatureTemplate = getSignatureTemplate(board.themeId)
+  const boardActions = (
+    <>
+      <Button variant="secondary" left={<PartyPopper size={16} />} onClick={() => setShowAdd(true)} disabled={loading}>
+        Add Message
+      </Button>
+      <Button variant="secondary" left={<Link2 size={16} />} onClick={() => setShowInvite(true)}>
+        Invite
+      </Button>
+      <Button variant="secondary" left={<CalendarClock size={16} />} onClick={() => setShowDeliver(true)}>
+        Deliver
+      </Button>
+      <Button variant="secondary" left={<Palette size={16} />} onClick={() => setShowTheme(true)}>
+        Theme
+      </Button>
+      <Button variant="ghost" left={<Play size={16} />} onClick={() => navigate(`/r/${board.id}/${board.revealToken}`)}>
+        Preview Reveal
+      </Button>
+    </>
+  )
+  const signatureEmptyState = (
+    <Surface className="p-6 text-center">
+      <div className="text-white text-lg font-semibold">Your card is ready</div>
+      <div className="mt-1 text-sm text-white/70">Start by adding your message or invite others.</div>
+      <div className="mt-4 flex flex-col sm:flex-row justify-center gap-2">
+        <Button variant="primary" onClick={() => setShowAdd(true)}>
+          Add First Message
+        </Button>
+        <Button variant="secondary" onClick={() => setShowInvite(true)}>
+          Copy Invite Link
+        </Button>
+      </div>
+    </Surface>
+  )
+
+  if (signatureTemplate) {
+    return (
+      <>
+        <SignatureTemplateRenderer
+          templateId={signatureTemplate.id}
+          mode="owner"
+          topBar={<TopBar />}
+          title={board.title}
+          recipientName={board.recipientName}
+          messages={messages}
+          actionSlot={boardActions}
+          emptyState={signatureEmptyState}
+          footerSlot={
+            <div className="mx-auto flex max-w-6xl justify-end px-4">
+              <Button
+                variant="danger"
+                left={<Trash2 size={16} />}
+                onClick={async () => {
+                  await deleteBoard(board.id)
+                  navigate('/app')
+                }}
+              >
+                Delete Board
+              </Button>
+            </div>
+          }
+        />
+        {plan === 'free' ? <Watermark /> : null}
+        {error ? <div className="fixed bottom-4 left-4 z-50 rounded-xl bg-rose-950/90 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+
+        <MessageComposerModal
+          open={showAdd}
+          title="Add a message"
+          onClose={() => setShowAdd(false)}
+          lockedReason={
+            board.status === 'delivered' || board.status === 'archived'
+              ? 'This board is locked and delivered.'
+              : isFreeLimitReached
+              ? 'You reached the Free plan limit of 20 messages on this board. Upgrade to Pro to keep collecting.'
+              : null
+          }
+          onSubmit={async (msg) => {
+            await addMessage(board.id, { ...msg, sticker: 'sparkle' })
+          }}
+        />
+
+        <Modal open={showInvite} title="Invite contributors" onClose={() => setShowInvite(false)}>
+          <div className="text-sm text-white/70">Anyone can add messages, no login needed.</div>
+          <div className="mt-4 grid gap-3">
+            <CopyField label="Contribution link" value={contributorLink} />
+            <CopyField label="Reveal preview link" value={revealLink} />
+            <div className="flex flex-wrap gap-2">
+              <a href={`https://wa.me/?text=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer">
+                <Button variant="secondary">WhatsApp</Button>
+              </a>
+              <a href={`mailto:?subject=${encodeURIComponent('Join the ' + board.title)}&body=${encodeURIComponent(waText)}`} target="_blank" rel="noreferrer">
+                <Button variant="secondary" left={<Mail size={14} />}>Email</Button>
+              </a>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal open={showDeliver} title="Schedule delivery" onClose={() => setShowDeliver(false)}>
+          <div className="grid gap-3">
+            <div>
+              <div className="text-xs text-white/60">Delivery date & time</div>
+              <input
+                type="datetime-local"
+                className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm text-white kb-ring"
+                value={scheduledAt || board.scheduledAt?.slice(0, 16) || ''}
+                onChange={(e) => setScheduledAt(e.target.value)}
+              />
+            </div>
+            <div>
+              <div className="text-xs text-white/60">Recipient contact</div>
+              <input
+                className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 kb-ring"
+                value={recipientContact}
+                onChange={(e) => setRecipientContact(e.target.value)}
+                placeholder={board.recipientContact || user.email}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="secondary" onClick={() => setShowDeliver(false)}>Close</Button>
+              <Button
+                variant="primary"
+                disabled={!scheduledAt}
+                onClick={async () => {
+                  await updateBoard(board.id, {
+                    scheduledAt: new Date(scheduledAt).toISOString(),
+                    destinationType,
+                    recipientContact,
+                    status: 'scheduled',
+                  })
+                  setShowDeliver(false)
+                }}
+              >
+                Save Schedule
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        <ThemePickerModal
+          open={showTheme}
+          occasion={board.occasion}
+          selectedThemeId={board.themeId}
+          onClose={() => setShowTheme(false)}
+          onSelect={async (t) => {
+            if (t.id === board.themeId) return
+            await updateBoard(board.id, { themeId: t.id } as Partial<import('../store/types').Board>)
+          }}
+        />
+      </>
+    )
+  }
 
   return (
     <ThemeBackground theme={theme} className="min-h-screen">

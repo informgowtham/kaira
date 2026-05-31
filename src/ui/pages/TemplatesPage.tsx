@@ -10,6 +10,11 @@ import { THEMES } from '../store/themes'
 import { useSEO } from '../utils/seo'
 import { ThemeBackground } from '../components/backgrounds/ThemeBackground'
 import type { BoardTheme } from '../store/types'
+import { signatureTemplatesForOccasion } from '../templates/registry'
+import { SignatureTemplatePreview } from '../templates/SignatureTemplatePreview'
+import type { SignatureTemplateDefinition } from '../templates/signatureTypes'
+
+type TemplateChoice = BoardTheme | SignatureTemplateDefinition
 
 export function TemplatesPage() {
   const [searchParams] = useSearchParams()
@@ -18,15 +23,16 @@ export function TemplatesPage() {
 
   const category = (searchParams.get('category') || 'birthday') as 'birthday' | 'farewell' | 'anniversary' | 'other'
   const themes = useMemo(() => THEMES.filter((t) => t.category === category), [category])
+  const signatureTemplates = useMemo(() => signatureTemplatesForOccasion(category), [category])
 
   const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1)
   useSEO(`${categoryTitle} Templates`, `Browse templates for ${category} boards.`)
 
-  const [pending, setPending] = useState<BoardTheme | null>(null)
+  const [pending, setPending] = useState<TemplateChoice | null>(null)
 
-  const buildCreateUrl = (theme: BoardTheme) => `/app/create?occasion=${category}&theme=${encodeURIComponent(theme.id)}`
+  const buildCreateUrl = (theme: TemplateChoice) => `/app/create?occasion=${category}&theme=${encodeURIComponent(theme.id)}`
 
-  const handleSelectTemplate = (theme: BoardTheme) => {
+  const handleSelectTemplate = (theme: TemplateChoice) => {
     if (!user) {
       setPending(theme)
       return
@@ -60,7 +66,47 @@ export function TemplatesPage() {
           })}
         </div>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Signature Templates</h2>
+              <p className="mt-1 text-sm text-white/60">Unique coded experiences with their own background, motion, and message layout.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {signatureTemplates.map((template, idx) => (
+              <motion.div
+                key={template.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 + 0.1, duration: 0.4 }}
+                className="group cursor-pointer rounded-2xl kb-glass border border-white/10 p-2 kb-shadow hover:bg-white/5 transition"
+                onClick={() => handleSelectTemplate(template)}
+              >
+                <SignatureTemplatePreview template={template} className="h-40 w-full rounded-xl" />
+                <div className="mt-3 px-2 pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-white">{template.name}</div>
+                    <div className="rounded-full border border-amber-200/25 bg-amber-300/90 px-2 py-0.5 text-[10px] font-bold text-black">Signature</div>
+                  </div>
+                  <div className="mt-1 text-xs text-white/60 leading-relaxed">{template.description}</div>
+                  <Button variant="secondary" className="mt-4 w-full kb-ring">
+                    Use Template
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Classic Themes</h2>
+            <p className="mt-1 text-sm text-white/60">Lightweight visual themes with the familiar KairaBoard masonry layout.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {themes.map((theme, idx) => (
             <motion.div
               key={theme.id}

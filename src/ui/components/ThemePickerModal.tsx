@@ -6,6 +6,9 @@ import { Button } from './Button'
 import type { BoardTheme, Occasion, ThemeMood } from '../store/types'
 import { THEMES } from '../store/themes'
 import { ThemeBackground } from './backgrounds/ThemeBackground'
+import { signatureTemplatesForOccasion } from '../templates/registry'
+import { SignatureTemplatePreview } from '../templates/SignatureTemplatePreview'
+import type { SignatureTemplateDefinition } from '../templates/signatureTypes'
 
 const MOODS: { id: ThemeMood; label: string }[] = [
   { id: 'elegant', label: 'Elegant' },
@@ -21,7 +24,7 @@ export function ThemePickerModal(props: {
   occasion: Occasion
   selectedThemeId: string
   onClose: () => void
-  onSelect: (theme: BoardTheme) => void
+  onSelect: (theme: BoardTheme | SignatureTemplateDefinition) => void
 }) {
   const { open, occasion, selectedThemeId, onClose, onSelect } = props
   const [q, setQ] = useState('')
@@ -57,6 +60,7 @@ export function ThemePickerModal(props: {
     : showMore
       ? [...topThemes, ...moreThemes]
       : topThemes
+  const signatureTemplates = useMemo(() => signatureTemplatesForOccasion(occasion), [occasion])
 
   function ThemeCard(props: { theme: BoardTheme; idx: number }) {
     const { theme, idx } = props
@@ -125,10 +129,44 @@ export function ThemePickerModal(props: {
         </div>
 
         {!queryActive ? (
-          <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Top themes</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Signature templates</div>
         ) : (
           <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Filtered results</div>
         )}
+
+        {!queryActive ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {signatureTemplates.map((template, idx) => {
+              const selected = template.id === selectedThemeId
+              return (
+                <motion.div
+                  key={template.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className={`rounded-2xl border p-2 kb-shadow transition cursor-pointer ${
+                    selected ? 'border-white/30 bg-white/10' : 'border-white/10 kb-glass hover:bg-white/8'
+                  }`}
+                  onClick={() => {
+                    onSelect(template)
+                    onClose()
+                  }}
+                >
+                  <SignatureTemplatePreview template={template} className="h-36 w-full rounded-xl" />
+                  <div className="mt-3 px-2 pb-2">
+                    <div className="text-sm font-semibold text-white">{template.name}</div>
+                    <div className="mt-1 text-xs text-white/60 leading-relaxed">{template.description}</div>
+                    <Button className="mt-3 w-full" variant={selected ? 'primary' : 'secondary'}>
+                      {selected ? 'Selected' : 'Use this template'}
+                    </Button>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        ) : null}
+
+        {!queryActive ? <div className="text-xs font-semibold uppercase tracking-wide text-white/45">Classic themes</div> : null}
 
         {visibleThemes.length === 0 ? (
           <div className="kb-glass rounded-xl border border-white/10 p-4 text-sm text-white/70">
