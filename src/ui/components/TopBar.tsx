@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { Crown, LayoutGrid, LogOut, Plus, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from './Button'
@@ -6,7 +6,6 @@ import { useAppStore } from '../store/useAppStore'
 
 export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'paper' }) {
   const { compact, tone = 'dark' } = props
-  const location = useLocation()
   const navigate = useNavigate()
   const user = useAppStore((s) => s.user)
   const plan = useAppStore((s) => s.plan)
@@ -72,7 +71,7 @@ export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'pa
               left={<LogOut size={16} />}
               onClick={() => {
                 logout()
-                if (location.pathname.startsWith('/app')) navigate('/')
+                navigate('/')
               }}
               aria-label="Log out"
               tone={tone}

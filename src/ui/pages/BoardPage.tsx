@@ -54,6 +54,19 @@ export function BoardPage() {
   }, [boardId, hydrateOwnerBoard])
 
   if (!board) {
+    if (loading) {
+      return (
+        <div className="min-h-screen kb-grid">
+          <TopBar />
+          <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-12">
+            <Surface className="p-6 max-w-xl">
+              <div className="text-white/70 text-sm">Loading board...</div>
+            </Surface>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="min-h-screen kb-grid">
         <TopBar />

@@ -168,32 +168,40 @@ export const useAppStore = create<AppState>()(
       },
 
       refreshBoards: async () => {
-        const boards = await listBoards()
-        set(() => ({ boards }))
+        await withLoading(set, async () => {
+          const boards = await listBoards()
+          set(() => ({ boards }))
+        })
       },
 
       hydrateOwnerBoard: async (boardId) => {
-        const payload = await getBoard(boardId)
-        set((state) => ({
-          boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
-          messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
-        }))
+        await withLoading(set, async () => {
+          const payload = await getBoard(boardId)
+          set((state) => ({
+            boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
+            messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
+          }))
+        })
       },
 
       hydratePublicBoard: async (boardId, token) => {
-        const payload = await getPublicBoard(boardId, token)
-        set((state) => ({
-          boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
-          messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
-        }))
+        await withLoading(set, async () => {
+          const payload = await getPublicBoard(boardId, token)
+          set((state) => ({
+            boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
+            messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
+          }))
+        })
       },
 
       hydrateReveal: async (boardId, token) => {
-        const payload = await getReveal(boardId, token)
-        set((state) => ({
-          boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
-          messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
-        }))
+        await withLoading(set, async () => {
+          const payload = await getReveal(boardId, token)
+          set((state) => ({
+            boards: [payload.board, ...state.boards.filter((b) => b.id !== boardId)],
+            messages: [...payload.messages, ...state.messages.filter((m) => m.boardId !== boardId)],
+          }))
+        })
       },
 
       createBoard: async ({ recipientName, occasion, themeId, recipientContact, scheduledAt, destinationType }) => {

@@ -907,7 +907,11 @@ async function trackEvent(eventName: string, boardId: string | null, actorUserId
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err)
-  res.status(500).json({ error: err.message || 'Internal server error' })
+  if (process.env.NODE_ENV === 'production') {
+    res.status(500).json({ error: 'Internal server error' })
+  } else {
+    res.status(500).json({ error: err.message || 'Internal server error' })
+  }
 })
 
 async function processDeliveries() {
