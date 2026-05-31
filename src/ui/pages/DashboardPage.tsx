@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { CalendarClock, ChevronRight, Plus } from 'lucide-react'
 import { TopBar } from '../components/TopBar'
 import { Button } from '../components/Button'
@@ -13,7 +13,8 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const user = useAppStore((s) => s.user)!
   const refreshBoards = useAppStore((s) => s.refreshBoards)
-  const boards = useAppStore((s) => boardsForOwner(s.boards, user.id))
+  const allBoards = useAppStore((s) => s.boards)
+  const boards = useMemo(() => boardsForOwner(allBoards, user.id), [allBoards, user.id])
   useSEO('Dashboard')
 
   useEffect(() => {
