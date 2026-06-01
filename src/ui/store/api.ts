@@ -20,14 +20,29 @@ export function setStoredToken(token: string | null) {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = options.token ?? getStoredToken()
-  const response = await fetch(`${API_BASE}${path}`, {
-    method: options.method || 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
+  
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal
+    })
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Connection timed out. The server might be asleep or unreachable.')
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => ({}))) as { error?: string }
