@@ -1,8 +1,8 @@
 import type { Board, Message, PlanTier, User } from './types'
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? 'http://127.0.0.1:4000' : window.location.origin)
+  import.meta.env.VITE_API_BASE_URL?.trim() ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:4000' : '')
 const TOKEN_KEY = 'kairaboard.auth.token'
 
 type RequestOptions = {
@@ -31,6 +31,10 @@ export type PublicConfigStatus = {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (!API_BASE) {
+    throw new Error('API is not configured for this environment. Set VITE_API_BASE_URL to your backend URL.')
+  }
+
   const token = options.token ?? getStoredToken()
   
   const controller = new AbortController()
