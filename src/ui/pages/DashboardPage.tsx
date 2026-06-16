@@ -14,7 +14,7 @@ export function DashboardPage() {
   const user = useAppStore((s) => s.user)!
   const refreshBoards = useAppStore((s) => s.refreshBoards)
   const allBoards = useAppStore((s) => s.boards)
-  const loading = useAppStore((s) => s.loading)
+  const boardsLoading = useAppStore((s) => s.boardsLoading)
   const boards = useMemo(() => boardsForOwner(allBoards, user.id), [allBoards, user.id])
   useSEO('Dashboard')
 
@@ -39,7 +39,7 @@ export function DashboardPage() {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-3">
           <Surface className="p-5 lg:col-span-2">
             <div className="text-sm font-semibold text-white">Recent boards</div>
-            {loading ? (
+            {boardsLoading ? (
               <div className="mt-3 text-sm text-white/50">Loading boards...</div>
             ) : boards.length === 0 ? (
               <div className="mt-3 kb-glass rounded-xl p-5 border border-white/10">

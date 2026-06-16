@@ -6,6 +6,7 @@ import { Surface } from '../components/Surface'
 import { TopBar } from '../components/TopBar'
 import { useAppStore } from '../store/useAppStore'
 import { useSEO } from '../utils/seo'
+import { preloadCreateBoardRoute, preloadPricingRoute, preloadTemplatesRoute } from '../routePreloads'
 
 const CATEGORIES = [
   { id: 'birthday', title: 'Birthday', icon: <PartyPopper size={18} />, hint: 'Make it feel like a gift.', accent: 'from-pink-400/40 via-orange-300/20 to-transparent' },
@@ -53,11 +54,13 @@ export function LandingPage() {
                 className="kb-pulse"
                 variant="primary"
                 left={<ArrowRight size={16} />}
+                onMouseEnter={() => void preloadCreateBoardRoute()}
+                onFocus={() => void preloadCreateBoardRoute()}
                 onClick={() => navigate(user ? '/app/create' : '/auth')}
               >
                 Create Group Card
               </Button>
-              <Link to="/pricing">
+              <Link to="/pricing" onMouseEnter={() => void preloadPricingRoute()} onFocus={() => void preloadPricingRoute()}>
                 <Button variant="secondary">View Pricing</Button>
               </Link>
             </div>
@@ -139,6 +142,8 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 * idx, duration: 0.4 }}
+              onMouseEnter={() => void preloadTemplatesRoute()}
+              onFocus={() => void preloadTemplatesRoute()}
               onClick={() => navigate(`/templates?category=${c.id}`)}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${c.accent}`} />

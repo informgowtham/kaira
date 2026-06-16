@@ -17,6 +17,7 @@ import {
   removeBoard,
   setPlanRemote,
   setStoredToken,
+  verifyRazorpayPayment,
 } from './api'
 
 type AppState = {
@@ -26,6 +27,7 @@ type AppState = {
   messages: Message[]
   bootstrapped: boolean
   loading: boolean
+  boardsLoading: boolean
   error: string | null
 
   bootstrap: () => Promise<void>
@@ -33,6 +35,12 @@ type AppState = {
   loginWithEmail: (email: string, password?: string, mode?: 'login' | 'signup') => Promise<void>
   logout: () => void
   setPlan: (plan: PlanTier) => Promise<void>
+  completeRazorpayUpgrade: (input: {
+    billing: 'monthly' | 'yearly'
+    razorpayOrderId: string
+    razorpayPaymentId: string
+    razorpaySignature: string
+  }) => Promise<void>
 
   refreshBoards: () => Promise<void>
   hydrateOwnerBoard: (boardId: string) => Promise<void>
@@ -106,6 +114,7 @@ export const useAppStore = create<AppState>()(
       messages: [],
       bootstrapped: false,
       loading: false,
+      boardsLoading: false,
       error: null,
 
       bootstrap: async () => {
@@ -114,8 +123,6 @@ export const useAppStore = create<AppState>()(
         try {
           const me = await getMe()
           set(() => ({ user: me.user, plan: me.plan }))
-          const boards = await listBoards()
-          set(() => ({ boards }))
         } catch {
           set(() => ({ user: null, boards: [], messages: [] }))
         } finally {
@@ -127,9 +134,7 @@ export const useAppStore = create<AppState>()(
         set(() => ({ loading: true }))
         try {
           const result = await loginGoogle({ credential })
-          set(() => ({ user: result.user, plan: result.plan, error: null }))
-          const boards = await listBoards()
-          set(() => ({ boards }))
+          set(() => ({ user: result.user, plan: result.plan, boards: [], messages: [], error: null }))
         } catch (error) {
           setError(set, error instanceof Error ? error.message : 'Unable to sign in with Google')
           throw error
@@ -142,9 +147,7 @@ export const useAppStore = create<AppState>()(
         set(() => ({ loading: true }))
         try {
           const result = await loginEmail({ email: email.trim(), password, mode })
-          set(() => ({ user: result.user, plan: result.plan, error: null }))
-          const boards = await listBoards()
-          set(() => ({ boards }))
+          set(() => ({ user: result.user, plan: result.plan, boards: [], messages: [], error: null }))
         } catch (error) {
           setError(set, error instanceof Error ? error.message : 'Unable to sign in')
           throw error
@@ -155,23 +158,33 @@ export const useAppStore = create<AppState>()(
 
       logout: () => {
         setStoredToken(null)
-        set(() => ({ user: null, boards: [], messages: [], error: null }))
+        set(() => ({ user: null, boards: [], messages: [], boardsLoading: false, error: null }))
       },
 
       setPlan: async (plan) => {
-        set(() => ({ plan }))
-        try {
-          await setPlanRemote(plan)
-        } catch {
-          // keep UI responsive in phase 2 foundations even if backend is down
-        }
+        await withLoading(set, async () => {
+          const nextPlan = await setPlanRemote(plan)
+          set(() => ({ plan: nextPlan }))
+        })
+      },
+
+      completeRazorpayUpgrade: async (input) => {
+        await withLoading(set, async () => {
+          const plan = await verifyRazorpayPayment(input)
+          set(() => ({ plan }))
+        })
       },
 
       refreshBoards: async () => {
-        await withLoading(set, async () => {
+        set(() => ({ boardsLoading: true, error: null }))
+        try {
           const boards = await listBoards()
           set(() => ({ boards }))
-        })
+        } catch (error) {
+          setError(set, error instanceof Error ? error.message : 'Unable to load boards')
+        } finally {
+          set(() => ({ boardsLoading: false }))
+        }
       },
 
       hydrateOwnerBoard: async (boardId) => {
@@ -265,7 +278,7 @@ export const useAppStore = create<AppState>()(
         const plan = state.plan === 'pro' ? 'pro' : 'free'
         const boards = Array.isArray(state.boards) ? state.boards : []
         const messages = Array.isArray(state.messages) ? state.messages : []
-        return { ...state, user, plan, boards, messages }
+        return { ...state, user, plan, boards, messages, boardsLoading: false }
       },
       partialize: (state) => ({
         user: state.user,

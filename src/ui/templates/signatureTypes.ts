@@ -13,6 +13,14 @@ export type SignatureTemplateId =
   | 'signature:paperclip-desk'
   | 'signature:memory-lane-paper'
   | 'signature:scrapbook-tape'
+  | 'signature:confetti-orbit'
+  | 'signature:joy-ribbons'
+  | 'signature:paper-trails'
+  | 'signature:gratitude-grid'
+  | 'signature:milestone-rings'
+  | 'signature:aurora-awards'
+  | 'signature:abstract-collage'
+  | 'signature:color-field'
 
 export type SignatureTemplateDefinition = {
   id: SignatureTemplateId

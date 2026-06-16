@@ -1,16 +1,141 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Check, Crown } from 'lucide-react'
 import { TopBar } from '../components/TopBar'
 import { Surface } from '../components/Surface'
 import { Button } from '../components/Button'
 import { useAppStore } from '../store/useAppStore'
+import { createRazorpayOrder, getPublicConfigStatus, type PublicConfigStatus } from '../store/api'
 import { useSEO } from '../utils/seo'
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => { open: () => void }
+  }
+}
+
+type RazorpayCheckoutOptions = {
+  key: string
+  amount: number
+  currency: string
+  name: string
+  description: string
+  order_id: string
+  prefill?: {
+    name?: string
+    email?: string
+  }
+  theme?: {
+    color?: string
+  }
+  handler: (response: {
+    razorpay_order_id: string
+    razorpay_payment_id: string
+    razorpay_signature: string
+  }) => void
+  modal?: {
+    ondismiss?: () => void
+  }
+}
+
+let razorpayScriptPromise: Promise<void> | null = null
+
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve()
+  if (razorpayScriptPromise) return razorpayScriptPromise
+
+  razorpayScriptPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Unable to load Razorpay Checkout'))
+    document.body.appendChild(script)
+  })
+  return razorpayScriptPromise
+}
 
 export function PricingPage() {
   useSEO('Pricing')
+  const navigate = useNavigate()
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly')
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [configStatus, setConfigStatus] = useState<PublicConfigStatus | null>(null)
   const plan = useAppStore((s) => s.plan)
+  const user = useAppStore((s) => s.user)
+  const loading = useAppStore((s) => s.loading)
   const setPlan = useAppStore((s) => s.setPlan)
+  const completeRazorpayUpgrade = useAppStore((s) => s.completeRazorpayUpgrade)
+
+  useEffect(() => {
+    let cancelled = false
+    void getPublicConfigStatus()
+      .then((status) => {
+        if (!cancelled) setConfigStatus(status)
+      })
+      .catch(() => {
+        if (!cancelled) setConfigStatus(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function startRazorpayUpgrade() {
+    setPaymentError(null)
+    if (configStatus && !configStatus.paymentsConfigured) {
+      setPaymentError('Payments are not configured in this environment yet.')
+      return
+    }
+    if (!user) {
+      navigate('/auth', { state: { from: '/pricing' } })
+      return
+    }
+    try {
+      const [{ keyId, order }] = await Promise.all([
+        createRazorpayOrder({ billing }),
+        loadRazorpayCheckout(),
+      ])
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay Checkout did not load')
+      }
+
+      const checkout = new window.Razorpay({
+        key: keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'KairaBoard',
+        description: `KairaBoard Pro ${billing === 'monthly' ? 'Monthly' : 'Yearly'}`,
+        order_id: order.id,
+        prefill: {
+          name: user?.displayName,
+          email: user?.email,
+        },
+        theme: {
+          color: '#f2c94c',
+        },
+        handler: async (response) => {
+          try {
+            await completeRazorpayUpgrade({
+              billing,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+          } catch (error) {
+            setPaymentError(error instanceof Error ? error.message : 'Payment verification failed')
+          }
+        },
+        modal: {
+          ondismiss: () => setPaymentError(null),
+        },
+      })
+      checkout.open()
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : 'Unable to start Razorpay checkout')
+    }
+  }
 
   return (
     <div className="min-h-screen kb-grid">
@@ -76,9 +201,24 @@ export function PricingPage() {
                 </div>
               ))}
             </div>
-            <Button className="mt-6 w-full" variant={plan === 'pro' ? 'secondary' : 'primary'} onClick={() => setPlan('pro')}>
-              {plan === 'pro' ? 'Current plan' : 'Switch to Pro'}
+            <Button
+              className="mt-6 w-full"
+              variant={plan === 'pro' ? 'secondary' : 'primary'}
+              disabled={plan === 'pro' || loading || (configStatus ? !configStatus.paymentsConfigured : false)}
+              onClick={() => void startRazorpayUpgrade()}
+            >
+              {plan === 'pro' ? 'Current plan' : loading ? 'Preparing checkout...' : 'Upgrade with Razorpay'}
             </Button>
+            {configStatus && !configStatus.paymentsConfigured ? (
+              <div className="mt-3 rounded-lg border border-amber-300/25 bg-amber-500/15 px-3 py-2 text-sm text-amber-100">
+                Razorpay checkout is not configured yet for this environment.
+              </div>
+            ) : null}
+            {paymentError ? (
+              <div className="mt-3 rounded-lg border border-rose-300/25 bg-rose-500/15 px-3 py-2 text-sm text-rose-100">
+                {paymentError}
+              </div>
+            ) : null}
           </Surface>
         </div>
       </div>

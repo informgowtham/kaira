@@ -1,6 +1,8 @@
 import type { Board, Message, PlanTier, User } from './types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:4000'
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:4000' : window.location.origin)
 const TOKEN_KEY = 'kairaboard.auth.token'
 
 type RequestOptions = {
@@ -16,6 +18,16 @@ function getStoredToken() {
 export function setStoredToken(token: string | null) {
   if (!token) localStorage.removeItem(TOKEN_KEY)
   else localStorage.setItem(TOKEN_KEY, token)
+}
+
+export type PublicConfigStatus = {
+  appEnv: string
+  googleAuthConfigured: boolean
+  gifSearchConfigured: boolean
+  paymentsConfigured: boolean
+  uploadProvider: string
+  uploadsPersistent: boolean
+  demoSeedingEnabled: boolean
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -128,10 +140,43 @@ export async function getMe() {
   return { user: mapUser(payload.user), plan: payload.plan }
 }
 
+export async function getPublicConfigStatus() {
+  return request<PublicConfigStatus>('/api/config/status')
+}
+
 export async function setPlanRemote(plan: PlanTier) {
   const payload = await request<{ plan: PlanTier }>('/api/auth/plan', {
     method: 'PATCH',
     body: { plan },
+  })
+  return payload.plan
+}
+
+export async function createRazorpayOrder(input: { billing: 'monthly' | 'yearly' }) {
+  return request<{
+    keyId: string
+    billing: 'monthly' | 'yearly'
+    order: {
+      id: string
+      amount: number
+      currency: string
+      receipt?: string
+    }
+  }>('/api/payments/razorpay/order', {
+    method: 'POST',
+    body: input,
+  })
+}
+
+export async function verifyRazorpayPayment(input: {
+  billing: 'monthly' | 'yearly'
+  razorpayOrderId: string
+  razorpayPaymentId: string
+  razorpaySignature: string
+}) {
+  const payload = await request<{ plan: PlanTier }>('/api/payments/razorpay/verify', {
+    method: 'POST',
+    body: input,
   })
   return payload.plan
 }

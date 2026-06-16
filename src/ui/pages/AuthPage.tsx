@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, LockKeyhole, Mail, Sparkles, Users } from 'lucide-react'
@@ -9,8 +9,17 @@ import { Surface } from '../components/Surface'
 import { Button } from '../components/Button'
 import { useAppStore } from '../store/useAppStore'
 import { useSEO } from '../utils/seo'
+import { preloadCreateBoardRoute, preloadDashboardRoute, preloadPricingRoute } from '../routePreloads'
+import { getPublicConfigStatus, type PublicConfigStatus } from '../store/api'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'placeholder-client-id'
+
+function safeReturnPath(value: unknown) {
+  if (typeof value !== 'string') return '/app'
+  if (!value.startsWith('/') || value.startsWith('//')) return '/app'
+  if (value.startsWith('/auth')) return '/app'
+  return value
+}
 
 export function AuthPage() {
   const navigate = useNavigate()
@@ -23,11 +32,32 @@ export function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [googleError, setGoogleError] = useState<string | null>(null)
+  const [configStatus, setConfigStatus] = useState<PublicConfigStatus | null>(null)
 
   const from = useMemo(() => {
     const state = location.state as { from?: string } | null
-    return state?.from || '/app'
+    return safeReturnPath(state?.from)
   }, [location.state])
+
+  useEffect(() => {
+    if (from.startsWith('/app/create')) void preloadCreateBoardRoute()
+    else if (from === '/pricing') void preloadPricingRoute()
+    else void preloadDashboardRoute()
+  }, [from])
+
+  useEffect(() => {
+    let cancelled = false
+    void getPublicConfigStatus()
+      .then((status) => {
+        if (!cancelled) setConfigStatus(status)
+      })
+      .catch(() => {
+        if (!cancelled) setConfigStatus(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useSEO(mode === 'login' ? 'Log in' : 'Sign up')
 
@@ -78,7 +108,7 @@ export function AuthPage() {
               </div>
 
               <div className="mt-6 flex flex-col gap-4">
-                {GOOGLE_CLIENT_ID === 'placeholder-client-id' ? (
+                {GOOGLE_CLIENT_ID === 'placeholder-client-id' || configStatus?.googleAuthConfigured === false ? (
                   <div className="rounded-xl border border-amber-300/25 bg-amber-500/15 p-4 text-sm leading-6 text-amber-100">
                     <strong>Google Sign-In is not configured yet.</strong> Add the same OAuth client id to{' '}
                     <code className="rounded bg-black/20 px-1 py-0.5">VITE_GOOGLE_CLIENT_ID</code> and{' '}
@@ -148,6 +178,12 @@ export function AuthPage() {
               {googleError || error ? (
                 <div className="mt-3 rounded-lg border border-rose-300/25 bg-rose-500/15 px-3 py-2 text-sm text-rose-100">
                   {googleError || error}
+                </div>
+              ) : null}
+
+              {configStatus && !configStatus.uploadsPersistent ? (
+                <div className="mt-3 rounded-lg border border-sky-300/20 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                  Media uploads are currently using temporary local storage in this environment.
                 </div>
               ) : null}
 

@@ -3,6 +3,22 @@ import type { SignatureTemplateDefinition, SignatureTemplateId } from './signatu
 
 export const SIGNATURE_TEMPLATES: SignatureTemplateDefinition[] = [
   {
+    id: 'signature:confetti-orbit',
+    category: 'birthday',
+    name: 'Confetti Orbit',
+    description: 'Cream paper space with orbiting confetti bursts and floating celebration notes.',
+    accent: '#f43f5e',
+    previewTone: 'light',
+  },
+  {
+    id: 'signature:joy-ribbons',
+    category: 'birthday',
+    name: 'Joy Ribbons',
+    description: 'Ribbon arcs, bright stage lighting, and tall message banners for lively wishes.',
+    accent: '#7c3aed',
+    previewTone: 'light',
+  },
+  {
     id: 'signature:birthday-wall-art',
     category: 'birthday',
     name: 'Birthday Wall Art',
@@ -40,6 +56,22 @@ export const SIGNATURE_TEMPLATES: SignatureTemplateDefinition[] = [
     name: 'Watercolor Journal',
     description: 'Hand-painted pigment washes, ink splatters, and pinned postcards.',
     accent: '#be123c',
+    previewTone: 'paper',
+  },
+  {
+    id: 'signature:paper-trails',
+    category: 'farewell',
+    name: 'Paper Trails',
+    description: 'Stamped stationery and warm routes tracing shared stops and stories.',
+    accent: '#9a5b37',
+    previewTone: 'paper',
+  },
+  {
+    id: 'signature:gratitude-grid',
+    category: 'farewell',
+    name: 'Gratitude Grid',
+    description: 'A neat editorial thank-you wall with structured cards and appreciation labels.',
+    accent: '#0f766e',
     previewTone: 'paper',
   },
   {
@@ -89,6 +121,38 @@ export const SIGNATURE_TEMPLATES: SignatureTemplateDefinition[] = [
     description: 'Layered papers, tape strips, stickers, photos, and handmade keepsake energy.',
     accent: '#db2777',
     previewTone: 'paper',
+  },
+  {
+    id: 'signature:milestone-rings',
+    category: 'anniversary',
+    name: 'Milestone Rings',
+    description: 'Soft ceremonial rings, refined spacing, and milestone cards arranged in orbit.',
+    accent: '#b45309',
+    previewTone: 'light',
+  },
+  {
+    id: 'signature:aurora-awards',
+    category: 'anniversary',
+    name: 'Aurora Awards',
+    description: 'Polished ribbons of light with a premium recognition-stage mood.',
+    accent: '#0ea5e9',
+    previewTone: 'dark',
+  },
+  {
+    id: 'signature:abstract-collage',
+    category: 'other',
+    name: 'Abstract Collage',
+    description: 'Cut-paper blocks, painted marks, and a modern gallery collage composition.',
+    accent: '#ea580c',
+    previewTone: 'paper',
+  },
+  {
+    id: 'signature:color-field',
+    category: 'other',
+    name: 'Color Field',
+    description: 'Museum-like color planes with calm floating notes and spacious composition.',
+    accent: '#2563eb',
+    previewTone: 'light',
   },
 ]
 

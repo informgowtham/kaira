@@ -12,16 +12,66 @@ export function SignatureTemplatePreview(props: {
   return (
     <div className={`relative overflow-hidden rounded-xl border border-white/10 ${props.className ?? 'h-40'}`}>
       {template.id === 'signature:birthday-wall-art' ? <BirthdayPreview /> : null}
+      {template.id === 'signature:confetti-orbit' ? <ConfettiOrbitPreview title={title} /> : null}
+      {template.id === 'signature:joy-ribbons' ? <JoyRibbonsPreview title={title} /> : null}
       {template.id === 'signature:hanging-tree-garden' ? <TreePreview /> : null}
       {template.id === 'signature:cosmic-constellation' ? <CosmicPreview /> : null}
+      {template.id === 'signature:milestone-rings' ? <MilestoneRingsPreview title={title} /> : null}
+      {template.id === 'signature:aurora-awards' ? <AuroraAwardsPreview title={title} /> : null}
       {template.id === 'signature:vinyl-lounge' ? <VinylPreview /> : null}
       {template.id === 'signature:watercolor-journal' ? <WatercolorPreview /> : null}
+      {template.id === 'signature:paper-trails' ? <PaperTrailsPreview title={title} /> : null}
+      {template.id === 'signature:gratitude-grid' ? <GratitudeGridPreview title={title} /> : null}
       {template.id === 'signature:floral-letterpress' ? <FloralPreview title={title} /> : null}
       {template.id === 'signature:origami-fold' ? <OrigamiPreview /> : null}
       {template.id === 'signature:butterfly-garden' ? <ButterflyPreview title={title} /> : null}
       {template.id === 'signature:paperclip-desk' ? <DeskPreview /> : null}
       {template.id === 'signature:memory-lane-paper' ? <MemoryLanePreview /> : null}
       {template.id === 'signature:scrapbook-tape' ? <ScrapbookPreview /> : null}
+      {template.id === 'signature:abstract-collage' ? <AbstractCollagePreview /> : null}
+      {template.id === 'signature:color-field' ? <ColorFieldPreview title={title} /> : null}
+    </div>
+  )
+}
+
+function ConfettiOrbitPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 bg-[#fff8ec] text-[#31143a]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(251,113,133,.18),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(96,165,250,.18),transparent_28%),radial-gradient(circle_at_50%_80%,rgba(251,191,36,.18),transparent_30%)]" />
+      {[0, 1, 2].map((idx) => (
+        <div
+          key={idx}
+          className="absolute rounded-full border border-[#31143a]/10"
+          style={{ inset: `${18 + idx * 16}px` }}
+        />
+      ))}
+      {['#fb7185', '#fbbf24', '#60a5fa', '#34d399'].map((color, idx) => (
+        <motion.div
+          key={color + idx}
+          className="absolute h-3 w-3 rounded-sm"
+          style={{ left: `${15 + idx * 20}%`, top: `${28 + (idx % 2) * 35}%`, background: color }}
+          animate={{ rotate: [0, 180, 360], y: [0, -8, 0] }}
+          transition={{ duration: 4 + idx, repeat: Infinity }}
+        />
+      ))}
+      <div className="absolute left-6 top-6 max-w-[60%] text-lg font-semibold">{title}</div>
+    </div>
+  )
+}
+
+function JoyRibbonsPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[linear-gradient(135deg,#fff4f8,#eef6ff_48%,#f5ecff)] text-[#321144]">
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 420 180" aria-hidden="true">
+        <path d="M-20 138 C60 40 130 210 230 84 C290 12 360 120 440 34" fill="none" stroke="#a855f7" strokeWidth="16" opacity=".22" strokeLinecap="round" />
+        <path d="M-10 158 C80 78 135 180 225 112 C290 58 330 160 430 92" fill="none" stroke="#fb7185" strokeWidth="12" opacity=".18" strokeLinecap="round" />
+      </svg>
+      <div className="absolute left-6 top-6 max-w-[58%] text-lg font-semibold">{title}</div>
+      <div className="absolute bottom-5 left-6 flex gap-2">
+        {[0, 1, 2].map((idx) => (
+          <div key={idx} className={`h-12 w-14 rounded-2xl ${idx === 1 ? 'bg-white/80' : 'bg-white/60'} shadow-lg`} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -165,6 +215,33 @@ function MemoryLanePreview() {
   )
 }
 
+function PaperTrailsPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 bg-[#f7f0e6] text-[#2f2017]">
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 420 180" aria-hidden="true">
+        <path d="M18 138 C92 84 132 170 214 88 C298 8 328 130 404 54" fill="none" stroke="#9a5b37" strokeDasharray="8 9" strokeWidth="4" />
+      </svg>
+      <div className="absolute left-6 top-6 max-w-[55%] text-lg font-semibold">{title}</div>
+      {[50, 170, 294].map((left, idx) => (
+        <div key={left} className="absolute h-16 w-24 rounded-2xl border border-[#d8c5ab] bg-[#fffaf2] shadow-lg" style={{ left, top: 70 + (idx % 2) * 36 }} />
+      ))}
+    </div>
+  )
+}
+
+function GratitudeGridPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 bg-[linear-gradient(135deg,#f7f7f2,#eef6f4)] text-[#17352f]">
+      <div className="absolute left-6 top-6 max-w-[60%] text-lg font-semibold">{title}</div>
+      <div className="absolute bottom-5 left-5 right-5 grid grid-cols-3 gap-3">
+        {[0, 1, 2, 3, 4, 5].map((idx) => (
+          <div key={idx} className="h-10 rounded-xl border border-emerald-900/10 bg-white/80 shadow-sm" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ScrapbookPreview() {
   return (
     <div className="absolute inset-0 bg-[#fffaf0]">
@@ -180,6 +257,58 @@ function ScrapbookPreview() {
           transition={{ duration: 3 + idx, repeat: Infinity }}
         />
       ))}
+    </div>
+  )
+}
+
+function MilestoneRingsPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[linear-gradient(160deg,#fff8ee,#f6efe4_42%,#eef6ff)] text-[#51311a]">
+      {[0, 1, 2].map((idx) => (
+        <div
+          key={idx}
+          className="absolute rounded-full border border-amber-700/25"
+          style={{ width: 96 + idx * 60, height: 96 + idx * 60, right: 20 + idx * 20, top: 12 + idx * 16 }}
+        />
+      ))}
+      <div className="absolute left-6 top-6 max-w-[58%] text-lg font-semibold">{title}</div>
+      <div className="absolute bottom-5 left-6 h-14 w-36 rounded-2xl bg-white/80 shadow-lg" />
+      <div className="absolute bottom-10 left-40 h-10 w-28 rounded-2xl bg-white/65 shadow-lg" />
+    </div>
+  )
+}
+
+function AuroraAwardsPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[linear-gradient(160deg,#071426,#15243a_42%,#0c1b2a)] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(14,165,233,.25),transparent_24%),radial-gradient(circle_at_75%_20%,rgba(168,85,247,.28),transparent_26%),radial-gradient(circle_at_50%_80%,rgba(45,212,191,.18),transparent_30%)]" />
+      <div className="absolute left-6 top-6 max-w-[56%] text-lg font-semibold">{title}</div>
+      <div className="absolute bottom-5 left-6 h-14 w-44 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-md" />
+      <div className="absolute right-8 top-8 h-20 w-20 rounded-full border border-sky-300/30" />
+    </div>
+  )
+}
+
+function AbstractCollagePreview() {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#f7f2ea]">
+      <div className="absolute left-8 top-8 h-20 w-28 -rotate-6 rounded-[1.6rem] bg-[#f97316]/28 shadow-lg" />
+      <div className="absolute left-28 top-14 h-20 w-32 rotate-3 rounded-[1.8rem] bg-[#60a5fa]/28 shadow-lg" />
+      <div className="absolute right-10 top-9 h-24 w-24 rotate-6 rounded-[1.8rem] bg-[#34d399]/24 shadow-lg" />
+      <div className="absolute left-10 bottom-8 h-24 w-36 -rotate-2 rounded-[1.4rem] bg-white/90 shadow-lg" />
+      <div className="absolute right-14 bottom-10 h-20 w-28 rotate-2 rounded-[1.4rem] bg-[#fbbf24]/24 shadow-lg" />
+    </div>
+  )
+}
+
+function ColorFieldPreview({ title }: { title: string }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#f8f4ef] text-[#18212c]">
+      <div className="absolute left-[8%] top-[14%] h-20 w-28 rounded-[1.25rem] bg-[#fda4af]/70" />
+      <div className="absolute right-[12%] top-[18%] h-24 w-32 rounded-[1.25rem] bg-[#93c5fd]/70" />
+      <div className="absolute left-[16%] bottom-[14%] h-24 w-32 rounded-[1.25rem] bg-[#c4b5fd]/65" />
+      <div className="absolute right-[14%] bottom-[10%] h-20 w-28 rounded-[1.25rem] bg-[#fde68a]/65" />
+      <div className="absolute left-6 top-6 max-w-[58%] text-lg font-semibold">{title}</div>
     </div>
   )
 }

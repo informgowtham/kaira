@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
+import crypto from 'crypto'
 import { OAuth2Client } from 'google-auth-library'
 import { pool, withTx } from './db'
 import { authMiddleware, signAuthToken, type AuthedUser } from './auth'
@@ -12,6 +13,18 @@ import { authMiddleware, signAuthToken, type AuthedUser } from './auth'
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'placeholder-client-id'
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID)
 const KLIPY_API_KEY = process.env.KLIPY_API_KEY || ''
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || ''
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || ''
+const RAZORPAY_CURRENCY = process.env.RAZORPAY_CURRENCY || 'INR'
+const RAZORPAY_PRO_MONTHLY_AMOUNT = Number(process.env.RAZORPAY_PRO_MONTHLY_AMOUNT || 190000)
+const RAZORPAY_PRO_YEARLY_AMOUNT = Number(process.env.RAZORPAY_PRO_YEARLY_AMOUNT || 1820000)
+const APP_ENV = process.env.APP_ENV || process.env.NODE_ENV || 'development'
+const IS_PRODUCTION = APP_ENV === 'production'
+const UPLOAD_PROVIDER = process.env.UPLOAD_PROVIDER || 'local'
+const SEED_DEMO_USERS =
+  process.env.SEED_DEMO_USERS != null
+    ? process.env.SEED_DEMO_USERS === 'true'
+    : !IS_PRODUCTION
 
 type ReqUser = Express.Request & { user: AuthedUser }
 
@@ -162,6 +175,18 @@ app.get('/api/health', (_, res) => {
   res.json({ ok: true })
 })
 
+app.get('/api/config/status', (_, res) => {
+  res.json({
+    appEnv: APP_ENV,
+    googleAuthConfigured: GOOGLE_CLIENT_ID !== 'placeholder-client-id',
+    gifSearchConfigured: Boolean(KLIPY_API_KEY),
+    paymentsConfigured: Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET),
+    uploadProvider: UPLOAD_PROVIDER,
+    uploadsPersistent: UPLOAD_PROVIDER !== 'local' || !IS_PRODUCTION,
+    demoSeedingEnabled: SEED_DEMO_USERS,
+  })
+})
+
 app.post('/api/auth/email', async (req, res) => {
   const { email, password, displayName, mode } = req.body as {
     email?: string
@@ -303,8 +328,154 @@ app.patch('/api/auth/plan', authMiddleware, async (req, res) => {
     res.status(400).json({ error: 'Invalid plan' })
     return
   }
+  if (plan === 'pro') {
+    res.status(402).json({ error: 'Use Razorpay checkout to upgrade to Pro' })
+    return
+  }
   await pool.query('UPDATE users SET subscription_status = $1 WHERE id = $2', [plan, user.id])
   res.json({ plan })
+})
+
+function razorpayAmountForBilling(billing: 'monthly' | 'yearly') {
+  return billing === 'monthly' ? RAZORPAY_PRO_MONTHLY_AMOUNT : RAZORPAY_PRO_YEARLY_AMOUNT
+}
+
+app.post('/api/payments/razorpay/order', authMiddleware, async (req, res) => {
+  const user = (req as ReqUser).user
+  const { billing } = req.body as { billing?: 'monthly' | 'yearly' }
+  const billingCycle = billing === 'monthly' ? 'monthly' : 'yearly'
+
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    res.status(503).json({ error: 'Razorpay is not configured' })
+    return
+  }
+
+  const amount = razorpayAmountForBilling(billingCycle)
+  if (!Number.isFinite(amount) || amount <= 0) {
+    res.status(500).json({ error: 'Razorpay amount is not configured correctly' })
+    return
+  }
+
+  const receipt = `kb_${Date.now().toString(36)}_${user.id.slice(0, 8)}`.slice(0, 40)
+  const response = await fetch('https://api.razorpay.com/v1/orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`,
+    },
+    body: JSON.stringify({
+      amount,
+      currency: RAZORPAY_CURRENCY,
+      receipt,
+      notes: {
+        user_id: user.id,
+        billing_cycle: billingCycle,
+        product: 'kairaboard_pro',
+      },
+    }),
+  })
+
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    console.error('Razorpay order error:', payload)
+    res.status(502).json({ error: 'Unable to create Razorpay order' })
+    return
+  }
+
+  await pool.query(
+    `INSERT INTO payment_orders
+       (user_id, provider, provider_order_id, billing_cycle, amount, currency, status)
+     VALUES ($1, 'razorpay', $2, $3, $4, $5, 'created')
+     ON CONFLICT (provider_order_id) DO UPDATE
+     SET user_id = EXCLUDED.user_id,
+         billing_cycle = EXCLUDED.billing_cycle,
+         amount = EXCLUDED.amount,
+         currency = EXCLUDED.currency,
+         status = 'created',
+         provider_payment_id = NULL,
+         updated_at = NOW()`,
+    [user.id, payload.id, billingCycle, amount, RAZORPAY_CURRENCY],
+  )
+
+  await trackEvent('upgrade_clicked', null, user.id, { provider: 'razorpay', billing: billingCycle, amount, currency: RAZORPAY_CURRENCY })
+  res.json({
+    keyId: RAZORPAY_KEY_ID,
+    order: payload,
+    billing: billingCycle,
+  })
+})
+
+app.post('/api/payments/razorpay/verify', authMiddleware, async (req, res) => {
+  const user = (req as ReqUser).user
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, billing } = req.body as {
+    razorpayOrderId?: string
+    razorpayPaymentId?: string
+    razorpaySignature?: string
+    billing?: 'monthly' | 'yearly'
+  }
+
+  if (!RAZORPAY_KEY_SECRET) {
+    res.status(503).json({ error: 'Razorpay is not configured' })
+    return
+  }
+  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+    res.status(400).json({ error: 'Missing Razorpay verification fields' })
+    return
+  }
+
+  const storedOrder = await pool.query(
+    `SELECT id, billing_cycle, amount, currency, status
+     FROM payment_orders
+     WHERE provider = 'razorpay' AND provider_order_id = $1 AND user_id = $2`,
+    [razorpayOrderId, user.id],
+  )
+  if (!storedOrder.rowCount) {
+    res.status(404).json({ error: 'Payment order was not found for this user' })
+    return
+  }
+
+  const generatedSignature = crypto
+    .createHmac('sha256', RAZORPAY_KEY_SECRET)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest('hex')
+
+  const received = Buffer.from(razorpaySignature)
+  const expected = Buffer.from(generatedSignature)
+  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
+    res.status(400).json({ error: 'Payment signature verification failed' })
+    return
+  }
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(
+      `UPDATE payment_orders
+       SET status = 'paid',
+           provider_payment_id = $1,
+           updated_at = NOW()
+       WHERE provider = 'razorpay' AND provider_order_id = $2 AND user_id = $3`,
+      [razorpayPaymentId, razorpayOrderId, user.id],
+    )
+    await client.query('UPDATE users SET subscription_status = $1 WHERE id = $2', ['pro', user.id])
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+
+  const order = storedOrder.rows[0]
+  await trackEvent('payment_verified', null, user.id, {
+    provider: 'razorpay',
+    billing: order.billing_cycle,
+    amount: order.amount,
+    currency: order.currency,
+    razorpay_order_id: razorpayOrderId,
+    razorpay_payment_id: razorpayPaymentId,
+  })
+  res.json({ plan: 'pro' })
 })
 
 app.get('/api/admin/organizations', authMiddleware, requireAdmin, async (req, res) => {
@@ -978,8 +1149,14 @@ async function seedTestUsers() {
   }
 }
 
-seedTestUsers().then(() => {
+const startServer = () => {
   app.listen(port, () => {
     console.log(`KairaBoard API listening on http://127.0.0.1:${port}`)
   })
-})
+}
+
+if (SEED_DEMO_USERS) {
+  seedTestUsers().finally(startServer)
+} else {
+  startServer()
+}

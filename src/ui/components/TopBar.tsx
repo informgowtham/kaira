@@ -3,6 +3,7 @@ import { clsx } from 'clsx'
 import { Crown, LayoutGrid, LogOut, Plus, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from './Button'
 import { useAppStore } from '../store/useAppStore'
+import { preloadCreateBoardRoute, preloadPricingRoute, preloadTemplatesRoute } from '../routePreloads'
 
 export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'paper' }) {
   const { compact, tone = 'dark' } = props
@@ -36,7 +37,7 @@ export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'pa
                 </Button>
               </Link>
             ) : null}
-            <Link to="/templates" className="hidden sm:inline-flex">
+            <Link to="/templates" className="hidden sm:inline-flex" onMouseEnter={() => void preloadTemplatesRoute()} onFocus={() => void preloadTemplatesRoute()}>
               <Button variant="ghost" left={<LayoutGrid size={16} />} tone={tone}>
                 Templates
               </Button>
@@ -45,6 +46,8 @@ export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'pa
               <Button
                 variant="secondary"
                 left={<Plus size={16} />}
+                onMouseEnter={() => void preloadCreateBoardRoute()}
+                onFocus={() => void preloadCreateBoardRoute()}
                 onClick={() => navigate('/app/create')}
                 aria-label="Create group card"
                 tone={tone}
@@ -53,7 +56,7 @@ export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'pa
               </Button>
             ) : null}
 
-            <Link to="/pricing" className="kb-ring rounded-lg">
+            <Link to="/pricing" className="kb-ring rounded-lg" onMouseEnter={() => void preloadPricingRoute()} onFocus={() => void preloadPricingRoute()}>
               <div
                 className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
                   plan === 'pro' 
@@ -81,12 +84,12 @@ export function TopBar(props: { compact?: boolean; tone?: 'light' | 'dark' | 'pa
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link to="/templates" className="hidden sm:inline-flex">
+            <Link to="/templates" className="hidden sm:inline-flex" onMouseEnter={() => void preloadTemplatesRoute()} onFocus={() => void preloadTemplatesRoute()}>
               <Button variant="ghost" left={<LayoutGrid size={16} />} tone={tone}>
                 Templates
               </Button>
             </Link>
-            <Link to="/pricing">
+            <Link to="/pricing" onMouseEnter={() => void preloadPricingRoute()} onFocus={() => void preloadPricingRoute()}>
               <Button variant="ghost" tone={tone}>Pricing</Button>
             </Link>
             <Link to="/auth">
