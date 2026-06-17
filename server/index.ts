@@ -29,7 +29,7 @@ const SEED_DEMO_USERS =
 type ReqUser = Express.Request & { user: AuthedUser }
 
 const app = express()
-const port = Number(process.env.API_PORT || 4000)
+const port = Number(process.env.PORT || process.env.API_PORT || 4000)
 const ADMIN_EMAILS = new Set(
   (process.env.ADMIN_EMAILS || 'admin@kairaboard.dev')
     .split(',')
