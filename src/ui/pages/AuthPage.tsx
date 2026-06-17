@@ -12,7 +12,8 @@ import { useSEO } from '../utils/seo'
 import { preloadCreateBoardRoute, preloadDashboardRoute, preloadPricingRoute } from '../routePreloads'
 import { getPublicConfigStatus, type PublicConfigStatus } from '../store/api'
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'placeholder-client-id'
+const DEFAULT_GOOGLE_CLIENT_ID = '700616241380-i7abas3spfkg1kugralod9khdarrf0ku.apps.googleusercontent.com'
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID
 
 function safeReturnPath(value: unknown) {
   if (typeof value !== 'string') return '/app'
